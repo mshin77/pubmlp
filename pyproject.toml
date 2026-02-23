@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pubmlp"
+version = "0.1.1"
+description = "Multimodal publication classifier with LLM and deep learning"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    {name = "Mikyung Shin", email = "shin.mikyung@gmail.com"}
+]
+keywords = ["systematic-review", "screening", "transformer", "classification", "bibliometrics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Text Processing",
+]
+
+dependencies = [
+    "torch>=2.3.0",
+    "transformers>=4.30.0",
+    "sentence-transformers>=2.2.0",
+    "scikit-learn>=1.3.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "tqdm>=4.65.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+]
+
+[project.optional-dependencies]
+screening = [
+    "openpyxl>=3.1.0",
+    "nltk>=3.8.0",
+]
+
+[project.urls]
+Homepage = "https://mshin77.github.io/pubmlp"
+Repository = "https://github.com/mshin77/pubmlp"
+Documentation = "https://mshin77.github.io/pubmlp"
+Issues = "https://github.com/mshin77/pubmlp/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pubmlp*"]
+
+[tool.setuptools.package-data]
+pubmlp = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

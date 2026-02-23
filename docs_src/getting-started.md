@@ -11,12 +11,6 @@ With optional dependencies:
 ```bash
 # Screening tools (openpyxl, nltk)
 pip install pubmlp[screening]
-
-# Development (pytest, ruff)
-pip install pubmlp[dev]
-
-# Documentation (sphinx)
-pip install pubmlp[docs]
 ```
 
 From GitHub:

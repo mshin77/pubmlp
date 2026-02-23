@@ -12,13 +12,11 @@ With optional dependencies:
 
 ```bash
 pip install pubmlp[screening]  # screening tools (openpyxl, nltk)
-pip install pubmlp[dev]        # development (pytest, ruff)
-pip install pubmlp[docs]       # documentation (sphinx)
 ```
 
 ## Citation
 
-- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.1.0) \[Computer software\]. <a href="https://github.com/mshin77/pubmlp">https://github.com/mshin77/pubmlp</a>
+- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.1.1) \[Computer software\]. <a href="https://github.com/mshin77/pubmlp">https://github.com/mshin77/pubmlp</a>
 
 ```{toctree}
 :hidden:

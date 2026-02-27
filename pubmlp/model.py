@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 from transformers import AutoModel
@@ -39,7 +40,15 @@ class PubMLP(nn.Module):
             embedding_size = self.encoder.get_sentence_embedding_dimension()
         else:
             self.model_name = model_name or 'bert-base-uncased'
-            self.encoder = AutoModel.from_pretrained(self.model_name)
+            devnull = os.open(os.devnull, os.O_WRONLY)
+            old_stderr = os.dup(2)
+            os.dup2(devnull, 2)
+            os.close(devnull)
+            try:
+                self.encoder = AutoModel.from_pretrained(self.model_name)
+            finally:
+                os.dup2(old_stderr, 2)
+                os.close(old_stderr)
             embedding_size = self.encoder.config.hidden_size
 
             if self.pooling_strategy == 'auto':

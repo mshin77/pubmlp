@@ -32,30 +32,33 @@ def _single_label_metrics(true_labels, predictions, probabilities,
         output_dir.mkdir(parents=True, exist_ok=True)
 
         cm = confusion_matrix(true_labels, predictions)
-        plt.figure(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(8, 6))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                    xticklabels=['Exclude', 'Include'], yticklabels=['Exclude', 'Include'])
-        plt.title(f'Confusion Matrix - {label_name}')
-        plt.ylabel('True Label')
-        plt.xlabel('Predicted Label')
+                    xticklabels=['Exclude', 'Include'], yticklabels=['Exclude', 'Include'],
+                    annot_kws={'size': 18}, ax=ax)
+        ax.set_title(f'Confusion Matrix - {label_name}', fontsize=16, fontweight='bold')
+        ax.set_ylabel('True Label', fontsize=14)
+        ax.set_xlabel('Predicted Label', fontsize=14)
+        ax.tick_params(labelsize=13)
         cm_path = output_dir / f'confusion_matrix_{label_name}.png'
-        plt.savefig(cm_path, dpi=300, bbox_inches='tight')
-        plt.close()
+        fig.savefig(cm_path, dpi=300, bbox_inches='tight')
+        plt.close(fig)
         print(f"\nConfusion matrix saved: {cm_path}")
 
         if metrics['roc_auc'] is not None:
             fpr, tpr, _ = roc_curve(true_labels, probabilities)
-            plt.figure(figsize=(8, 6))
-            plt.plot(fpr, tpr, label=f'ROC curve (AUC = {metrics["roc_auc"]:.3f})')
-            plt.plot([0, 1], [0, 1], 'k--', label='Random')
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title(f'ROC Curve - {label_name}')
-            plt.legend()
-            plt.grid(alpha=0.3)
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.plot(fpr, tpr, linewidth=2.5, label=f'ROC curve (AUC = {metrics["roc_auc"]:.3f})')
+            ax.plot([0, 1], [0, 1], 'k--', linewidth=1.5, label='Random')
+            ax.set_xlabel('False Positive Rate', fontsize=14)
+            ax.set_ylabel('True Positive Rate', fontsize=14)
+            ax.set_title(f'ROC Curve - {label_name}', fontsize=16, fontweight='bold')
+            ax.legend(fontsize=13, loc='lower right')
+            ax.tick_params(labelsize=13)
+            ax.grid(alpha=0.3)
             roc_path = output_dir / f'roc_curve_{label_name}.png'
-            plt.savefig(roc_path, dpi=300, bbox_inches='tight')
-            plt.close()
+            fig.savefig(roc_path, dpi=300, bbox_inches='tight')
+            plt.close(fig)
             print(f"ROC curve saved: {roc_path}")
 
     return metrics
@@ -124,3 +127,35 @@ def calculate_evaluation_metrics(true_labels, predictions, probabilities,
         'macro_f1': macro_f1,
         'hamming_loss': hamming,
     }
+
+
+def calculate_wss_at_recall(true_labels, probabilities, target_recall=0.95):
+    """WSS@recall (Cohen et al., 2006): fraction of screening effort saved at target recall."""
+    true_arr = np.asarray(true_labels)
+    prob_arr = np.asarray(probabilities)
+    n_total = len(true_arr)
+    n_relevant = true_arr.sum()
+    if n_relevant == 0:
+        return {'wss': 0.0, 'screened_pct': 1.0, 'recall_achieved': 0.0}
+
+    # Rank by descending probability, count how many to screen to hit target recall
+    ranked = np.argsort(-prob_arr)
+    cumulative_relevant = np.cumsum(true_arr[ranked])
+    target_count = int(np.ceil(target_recall * n_relevant))
+    screened_to_target = np.searchsorted(cumulative_relevant, target_count) + 1
+    screened_pct = screened_to_target / n_total
+    # WSS = (1 - screened%) - (1 - recall)
+    wss = (1 - screened_pct) - (1 - target_recall)
+    return {
+        'wss': max(wss, 0.0),
+        'screened_pct': screened_pct,
+        'recall_achieved': cumulative_relevant[screened_to_target - 1] / n_relevant,
+    }
+
+
+def calculate_ndcg(true_labels, probabilities):
+    """NDCG via sklearn.metrics.ndcg_score (Järvelin & Kekäläinen, 2002)."""
+    from sklearn.metrics import ndcg_score
+    true_arr = np.asarray(true_labels, dtype=float).reshape(1, -1)
+    prob_arr = np.asarray(probabilities, dtype=float).reshape(1, -1)
+    return float(ndcg_score(true_arr, prob_arr))

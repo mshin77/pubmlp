@@ -110,7 +110,7 @@ robust_config = Config(
 )
 
 hitl_config = Config(
-    al_query_strategy='uncertainty',
+    al_query_strategy='hybrid_max_uncertainty',
     al_batch_size=20,
     safe_consecutive_irrelevant=50,
     safe_min_screened_pct=0.5,

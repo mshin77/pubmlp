@@ -81,6 +81,8 @@ class PubMLP(nn.Module):
                     sentence_embedding = sentence_embedding.to(categorical_tensor.device)
                 elif numeric_tensor is not None and numeric_tensor.numel() > 0:
                     sentence_embedding = sentence_embedding.to(numeric_tensor.device)
+                else:
+                    sentence_embedding = sentence_embedding.to(input_ids.device)
         else:
             outputs = self.encoder(input_ids, attention_mask)
             if self.pooling_strategy == 'pooler' and hasattr(outputs, 'pooler_output') and outputs.pooler_output is not None:

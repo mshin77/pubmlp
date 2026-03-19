@@ -130,7 +130,7 @@ def calculate_semantic_scores(evidence_list: List[Dict], criterion_description: 
         }
     except Exception as e:
         logger.error(f"Semantic scoring failed: {e}")
-        return {'individual_scores': [], 'mean_score': 0.0, 'max_score': 0.0, 'count': len(texts)}
+        return {'individual_scores': [], 'mean_score': 0.0, 'max_score': 0.0, 'count': 0}
 
 
 def regex_screen(input_file: str, inclusion_patterns: Dict, output_file: str = None,

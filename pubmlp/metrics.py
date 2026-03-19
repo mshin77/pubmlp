@@ -21,7 +21,7 @@ def _single_label_metrics(true_labels, predictions, probabilities,
     }
 
     print(f"EVALUATION METRICS: {label_name.upper()}")
-    print(classification_report(true_labels, predictions, target_names=['Exclude', 'Include'], digits=3))
+    print(classification_report(true_labels, predictions, target_names=['Exclude', 'Include'], digits=3, zero_division=0))
     print("Key Metrics:")
     for metric, value in metrics.items():
         if value is not None:

@@ -113,7 +113,8 @@ def simulate_al(df, label_col, model_fn, strategy='uncertainty', batch_size=20,
         probs = model_fn(train_df, unlabeled_df)
 
         query_idx = select_query_batch(probs, strategy=strategy, batch_size=batch_size, seed=seed + iteration)
-        actual_indices = [state.unlabeled_indices[i] for i in query_idx if i < len(state.unlabeled_indices)]
+        n_unlabeled = len(state.unlabeled_indices)
+        actual_indices = [state.unlabeled_indices[i] for i in query_idx if i < n_unlabeled]
 
         state.labeled_indices.extend(actual_indices)
         state.unlabeled_indices = [i for i in state.unlabeled_indices if i not in set(actual_indices)]

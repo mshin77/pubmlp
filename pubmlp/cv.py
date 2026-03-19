@@ -44,33 +44,33 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
     skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
 
     fold_metrics = []
-    best_fold_val_acc = 0.0
-    best_fold_idx = 0
+    best_fold_validation_accuracy = 0.0
+    best_fold_index = 0
     best_model_state = None
 
-    for fold_idx, (train_idx, val_idx) in enumerate(skf.split(data, strat_labels)):
+    for fold_index, (train_indices, validation_indices) in enumerate(skf.split(data, strat_labels)):
         print(f'\n{"="*60}')
-        print(f'Fold {fold_idx + 1}/{config.n_folds}')
+        print(f'Fold {fold_index + 1}/{config.n_folds}')
         print(f'{"="*60}')
-        print(f'Train: {len(train_idx)} | Val: {len(val_idx)}')
+        print(f'Training: {len(train_indices)} | Validation: {len(validation_indices)}')
 
-        train_data = data.iloc[train_idx].reset_index(drop=True)
-        val_data = data.iloc[val_idx].reset_index(drop=True)
+        train_data = data.iloc[train_indices].reset_index(drop=True)
+        validation_data = data.iloc[validation_indices].reset_index(drop=True)
 
-        # Fit transforms on train fold, apply to val fold
+        # Fit transforms on training fold, apply to validation fold
         train_dataset, fitted = preprocess_dataset(
             train_data, tokenizer, device, column_specifications,
             numeric_transform, max_length=config.max_length,
             rare_threshold=getattr(config, 'rare_threshold', 5),
         )
-        val_dataset, _ = preprocess_dataset(
-            val_data, tokenizer, device, column_specifications,
+        validation_dataset, _ = preprocess_dataset(
+            validation_data, tokenizer, device, column_specifications,
             numeric_transform, max_length=config.max_length,
             fitted_transforms=fitted,
         )
 
         train_loader = create_dataloader(train_dataset, RandomSampler, config.batch_size)
-        val_loader = create_dataloader(val_dataset, SequentialSampler, config.eval_batch_size)
+        validation_loader = create_dataloader(validation_dataset, SequentialSampler, config.eval_batch_size)
 
         # Use fitted vocab sizes if available from this fold's training data
         fold_vocab_sizes = fitted.categorical_vocab_sizes if fitted.categorical_vocabs else categorical_vocab_sizes
@@ -93,7 +93,7 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
         criterion = torch.nn.BCEWithLogitsLoss()
 
         results = train_evaluate_model(
-            model, train_loader, val_loader, None,
+            model, train_loader, validation_loader, None,
             optimizer, criterion, device, config.epochs,
             early_stopping_patience=config.early_stopping_patience,
             gradient_clip_norm=config.gradient_clip_norm,
@@ -101,40 +101,39 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
             warmup_steps=getattr(config, 'warmup_steps', 0),
         )
 
-        train_losses, val_losses, train_accs, val_accs, test_acc, best_val_loss, fold_state, best_epoch = results
+        train_losses, validation_losses, train_accuracies, validation_accuracies, test_accuracy, best_val_loss, fold_state, best_epoch = results
 
         if fold_state is not None:
             model.load_state_dict(fold_state)
 
-        preds, probs, true_labels = get_predictions_and_labels(model, val_loader, device)
+        predictions, probabilities, true_labels = get_predictions_and_labels(model, validation_loader, device)
 
-        fold_dir = f'{output_dir}/fold_{fold_idx + 1}' if output_dir else None
+        fold_dir = f'{output_dir}/fold_{fold_index + 1}' if output_dir else None
         metrics = calculate_evaluation_metrics(
-            true_labels, preds, probs,
+            true_labels, predictions, probabilities,
             output_dir=fold_dir,
-            label_name=f'fold_{fold_idx + 1}',
+            label_name=f'fold_{fold_index + 1}',
             save_figures=output_dir is not None,
             label_names=label_names,
         )
-        best_epoch_acc = val_accs[best_epoch - 1] if val_accs and best_epoch > 0 else 0.0
+        best_epoch_accuracy = validation_accuracies[best_epoch - 1] if validation_accuracies and best_epoch > 0 else 0.0
         metrics.update({
             'best_epoch': best_epoch,
             'best_val_loss': best_val_loss,
-            'val_accuracy': best_epoch_acc,
+            'validation_accuracy': best_epoch_accuracy,
         })
         fold_metrics.append(metrics)
 
-        if best_epoch_acc > best_fold_val_acc:
-            best_fold_val_acc = best_epoch_acc
-            best_fold_idx = fold_idx
+        if best_epoch_accuracy > best_fold_validation_accuracy:
+            best_fold_validation_accuracy = best_epoch_accuracy
+            best_fold_index = fold_index
             best_model_state = copy.deepcopy(fold_state)
 
-        # Print summary depends on single vs multi-label
         if 'f1_score' in metrics:
-            print(f'Fold {fold_idx + 1} — F1: {metrics["f1_score"]:.3f} | '
+            print(f'Fold {fold_index + 1} — F1: {metrics["f1_score"]:.3f} | '
                   f'Precision: {metrics["precision"]:.3f} | Recall: {metrics["recall"]:.3f}')
         else:
-            print(f'Fold {fold_idx + 1} — Macro F1: {metrics["macro_f1"]:.3f} | '
+            print(f'Fold {fold_index + 1} — Macro F1: {metrics["macro_f1"]:.3f} | '
                   f'Hamming Loss: {metrics["hamming_loss"]:.3f}')
 
     # Aggregate across folds
@@ -148,13 +147,13 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
     summary_keys = [k for k in ['accuracy', 'precision', 'recall', 'specificity', 'f1_score',
                                  'roc_auc', 'macro_f1', 'hamming_loss'] if k in mean_metrics]
     for k in summary_keys:
-        print(f'{k}: {mean_metrics[k]:.3f} ± {std_metrics[k]:.3f}')
-    print(f'Best fold: {best_fold_idx + 1} (val acc: {best_fold_val_acc:.3f}%)')
+        print(f'{k}: {mean_metrics[k]:.3f} +/- {std_metrics[k]:.3f}')
+    print(f'Best fold: {best_fold_index + 1} (validation accuracy: {best_fold_validation_accuracy:.3f}%)')
 
     return {
         'fold_metrics': fold_metrics,
         'mean_metrics': mean_metrics,
         'std_metrics': std_metrics,
-        'best_fold': best_fold_idx,
+        'best_fold': best_fold_index,
         'best_model_state': best_model_state,
     }

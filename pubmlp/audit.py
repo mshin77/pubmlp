@@ -34,8 +34,8 @@ class AuditTrail:
 
     def log_batch(self, record_ids, predictions, probabilities, phase='screening',
                   reviewer_id=None):
-        for rid, pred, prob in zip(record_ids, predictions, probabilities):
-            self.log_decision(rid, pred, prob, phase, reviewer_id)
+        for record_id, prediction, probability in zip(record_ids, predictions, probabilities):
+            self.log_decision(record_id, prediction, probability, phase, reviewer_id)
 
     def update_human_label(self, record_id, human_label, reviewer_id=None, notes=''):
         for entry in self.entries:

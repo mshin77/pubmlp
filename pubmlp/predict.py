@@ -8,8 +8,8 @@ def _run_inference(model, dataloader, device, threshold=0.5, calibration=None,
                    collect_labels=False, desc="Predicting"):
     """Shared inference loop for prediction functions."""
     model.eval()
-    thresh = torch.tensor(threshold) if not isinstance(threshold, torch.Tensor) else threshold
-    all_preds, all_probs, all_labels = [], [], []
+    threshold_tensor = torch.tensor(threshold) if not isinstance(threshold, torch.Tensor) else threshold
+    all_predictions, all_probabilities, all_labels = [], [], []
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc=desc):
@@ -17,21 +17,21 @@ def _run_inference(model, dataloader, device, threshold=0.5, calibration=None,
             outputs = model(input_ids, attention_mask, categorical_tensor, numeric_tensor, texts)
             if calibration is not None:
                 outputs = calibration.transform(outputs)
-            probs = torch.sigmoid(outputs)
-            preds = (probs > thresh.to(probs.device)).long()
+            probabilities = torch.sigmoid(outputs)
+            predictions = (probabilities > threshold_tensor.to(probabilities.device)).long()
 
             if outputs.shape[-1] == 1:
-                all_preds.extend(preds.squeeze(-1).tolist())
-                all_probs.extend(probs.squeeze(-1).tolist())
+                all_predictions.extend(predictions.squeeze(-1).tolist())
+                all_probabilities.extend(probabilities.squeeze(-1).tolist())
                 if collect_labels:
                     all_labels.extend(labels.squeeze(-1).tolist())
             else:
-                all_preds.extend(preds.tolist())
-                all_probs.extend(probs.tolist())
+                all_predictions.extend(predictions.tolist())
+                all_probabilities.extend(probabilities.tolist())
                 if collect_labels:
                     all_labels.extend(labels.tolist())
 
-    return all_preds, all_probs, all_labels
+    return all_predictions, all_probabilities, all_labels
 
 
 def predict_model(model, unlabeled_dataloader, device, return_probs=True,
@@ -49,9 +49,9 @@ def predict_model(model, unlabeled_dataloader, device, return_probs=True,
     Returns:
         tuple or list: (predictions, probabilities) if return_probs else predictions only.
     """
-    preds, probs, _ = _run_inference(model, unlabeled_dataloader, device,
-                                     threshold, calibration, desc="Predicting")
-    return (preds, probs) if return_probs else preds
+    predictions, probabilities, _ = _run_inference(model, unlabeled_dataloader, device,
+                                                    threshold, calibration, desc="Predicting")
+    return (predictions, probabilities) if return_probs else predictions
 
 
 def get_predictions_and_labels(model, dataloader, device, threshold=0.5,
@@ -80,5 +80,5 @@ def flag_uncertain(probabilities, low=0.3, high=0.7):
     if not probabilities:
         return []
     if isinstance(probabilities[0], (list, tuple)):
-        return [[low < p < high for p in row] for row in probabilities]
-    return [low < p < high for p in probabilities]
+        return [[low < probability < high for probability in row] for row in probabilities]
+    return [low < probability < high for probability in probabilities]

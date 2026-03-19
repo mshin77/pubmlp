@@ -20,7 +20,7 @@ def _single_label_metrics(true_labels, predictions, probabilities,
         'roc_auc': roc_auc_score(true_labels, probabilities) if len(set(true_labels)) > 1 else None,
     }
 
-    print(f"EVALUATION METRICS: {label_name.upper()}")
+    print(f"Evaluation Metrics: {label_name}")
     print(classification_report(true_labels, predictions, target_names=['Exclude', 'Include'], digits=3, zero_division=0))
     print("Key Metrics:")
     for metric, value in metrics.items():
@@ -31,24 +31,24 @@ def _single_label_metrics(true_labels, predictions, probabilities,
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        cm = confusion_matrix(true_labels, predictions)
+        confusion = confusion_matrix(true_labels, predictions)
         fig, ax = plt.subplots(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+        sns.heatmap(confusion, annot=True, fmt='d', cmap='Blues',
                     xticklabels=['Exclude', 'Include'], yticklabels=['Exclude', 'Include'],
                     annot_kws={'size': 18}, ax=ax)
         ax.set_title(f'Confusion Matrix - {label_name}', fontsize=16, fontweight='bold')
         ax.set_ylabel('True Label', fontsize=14)
         ax.set_xlabel('Predicted Label', fontsize=14)
         ax.tick_params(labelsize=13)
-        cm_path = output_dir / f'confusion_matrix_{label_name}.png'
-        fig.savefig(cm_path, dpi=300, bbox_inches='tight')
+        confusion_path = output_dir / f'confusion_matrix_{label_name}.png'
+        fig.savefig(confusion_path, dpi=300, bbox_inches='tight')
         plt.close(fig)
-        print(f"\nConfusion matrix saved: {cm_path}")
+        print(f"\nConfusion matrix saved: {confusion_path}")
 
         if metrics['roc_auc'] is not None:
-            fpr, tpr, _ = roc_curve(true_labels, probabilities)
+            false_positive_rate, true_positive_rate, _ = roc_curve(true_labels, probabilities)
             fig, ax = plt.subplots(figsize=(8, 6))
-            ax.plot(fpr, tpr, linewidth=2.5, label=f'ROC curve (AUC = {metrics["roc_auc"]:.3f})')
+            ax.plot(false_positive_rate, true_positive_rate, linewidth=2.5, label=f'ROC curve (AUC = {metrics["roc_auc"]:.3f})')
             ax.plot([0, 1], [0, 1], 'k--', linewidth=1.5, label='Random')
             ax.set_xlabel('False Positive Rate', fontsize=14)
             ax.set_ylabel('True Positive Rate', fontsize=14)
@@ -94,33 +94,30 @@ def calculate_evaluation_metrics(true_labels, predictions, probabilities,
                                      output_dir, label_name, save_figures)
 
     # Multi-label
-    true_arr = np.array(true_labels)
-    pred_arr = np.array(predictions)
-    prob_arr = np.array(probabilities)
-    num_labels = true_arr.shape[1]
+    true_array = np.array(true_labels)
+    prediction_array = np.array(predictions)
+    probability_array = np.array(probabilities)
+    num_labels = true_array.shape[1]
 
     if label_names is None:
         label_names = [f'label_{i}' for i in range(num_labels)]
 
     per_label = {}
-    for i, lname in enumerate(label_names):
-        per_label[lname] = _single_label_metrics(
-            true_arr[:, i].tolist(),
-            pred_arr[:, i].tolist(),
-            prob_arr[:, i].tolist(),
+    for i, label in enumerate(label_names):
+        per_label[label] = _single_label_metrics(
+            true_array[:, i].tolist(),
+            prediction_array[:, i].tolist(),
+            probability_array[:, i].tolist(),
             output_dir=output_dir,
-            label_name=f'{label_name}_{lname}',
+            label_name=f'{label_name}_{label}',
             save_figures=save_figures,
         )
 
-    # Macro-averaged F1
     f1_scores = [m['f1_score'] for m in per_label.values()]
     macro_f1 = np.mean(f1_scores)
+    hamming = (true_array != prediction_array).mean()
 
-    # Hamming loss: fraction of labels that are incorrectly predicted
-    hamming = (true_arr != pred_arr).mean()
-
-    print(f"\nMACRO F1: {macro_f1:.3f} | Hamming Loss: {hamming:.3f}")
+    print(f"\nMacro F1: {macro_f1:.3f} | Hamming Loss: {hamming:.3f}")
 
     return {
         'per_label': per_label,
@@ -131,20 +128,18 @@ def calculate_evaluation_metrics(true_labels, predictions, probabilities,
 
 def calculate_wss_at_recall(true_labels, probabilities, target_recall=0.95):
     """WSS@recall (Cohen et al., 2006): fraction of screening effort saved at target recall."""
-    true_arr = np.asarray(true_labels)
-    prob_arr = np.asarray(probabilities)
-    n_total = len(true_arr)
-    n_relevant = true_arr.sum()
+    true_array = np.asarray(true_labels)
+    probability_array = np.asarray(probabilities)
+    n_total = len(true_array)
+    n_relevant = true_array.sum()
     if n_relevant == 0:
         return {'wss': 0.0, 'screened_pct': 1.0, 'recall_achieved': 0.0}
 
-    # Rank by descending probability, count how many to screen to hit target recall
-    ranked = np.argsort(-prob_arr)
-    cumulative_relevant = np.cumsum(true_arr[ranked])
+    ranked = np.argsort(-probability_array)
+    cumulative_relevant = np.cumsum(true_array[ranked])
     target_count = int(np.ceil(target_recall * n_relevant))
     screened_to_target = np.searchsorted(cumulative_relevant, target_count) + 1
     screened_pct = screened_to_target / n_total
-    # WSS = (1 - screened%) - (1 - recall)
     wss = (1 - screened_pct) - (1 - target_recall)
     return {
         'wss': max(wss, 0.0),
@@ -156,6 +151,6 @@ def calculate_wss_at_recall(true_labels, probabilities, target_recall=0.95):
 def calculate_ndcg(true_labels, probabilities):
     """NDCG via sklearn.metrics.ndcg_score (Järvelin & Kekäläinen, 2002)."""
     from sklearn.metrics import ndcg_score
-    true_arr = np.asarray(true_labels, dtype=float).reshape(1, -1)
-    prob_arr = np.asarray(probabilities, dtype=float).reshape(1, -1)
-    return float(ndcg_score(true_arr, prob_arr))
+    true_array = np.asarray(true_labels, dtype=float).reshape(1, -1)
+    probability_array = np.asarray(probabilities, dtype=float).reshape(1, -1)
+    return float(ndcg_score(true_array, probability_array))

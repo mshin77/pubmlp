@@ -20,8 +20,8 @@ class ALState:
 
 def rank_by_uncertainty(probabilities):
     """Most uncertain (closest to 0.5) first."""
-    probs = np.asarray(probabilities)
-    return np.argsort(np.abs(probs - 0.5))
+    probability_array = np.asarray(probabilities)
+    return np.argsort(np.abs(probability_array - 0.5))
 
 
 def rank_by_random(n, seed=42):
@@ -38,44 +38,44 @@ def rank_by_max_relevance(probabilities):
 
 def rank_by_hybrid_max_uncertainty(probabilities, exploit_ratio=0.95, seed=42):
     """95% max-relevance + 5% uncertainty."""
-    probs = np.asarray(probabilities)
-    n_exploit = int(len(probs) * exploit_ratio)
-    max_ranked = rank_by_max_relevance(probs)
-    unc_ranked = rank_by_uncertainty(probs)
-    exploit_set = set(max_ranked[:n_exploit].tolist())
-    explore = [i for i in unc_ranked if i not in exploit_set]
-    return np.concatenate([max_ranked[:n_exploit], np.array(explore)])
+    probability_array = np.asarray(probabilities)
+    n_exploit_samples = int(len(probability_array) * exploit_ratio)
+    relevance_ranked = rank_by_max_relevance(probability_array)
+    uncertainty_ranked = rank_by_uncertainty(probability_array)
+    exploit_set = set(relevance_ranked[:n_exploit_samples].tolist())
+    explore = [i for i in uncertainty_ranked if i not in exploit_set]
+    return np.concatenate([relevance_ranked[:n_exploit_samples], np.array(explore)])
 
 
 def rank_by_hybrid_max_random(probabilities, exploit_ratio=0.95, seed=42):
     """95% max-relevance + 5% random."""
-    probs = np.asarray(probabilities)
-    n_exploit = int(len(probs) * exploit_ratio)
-    max_ranked = rank_by_max_relevance(probs)
-    rand_ranked = rank_by_random(len(probs), seed)
-    exploit_set = set(max_ranked[:n_exploit].tolist())
-    explore = [i for i in rand_ranked if i not in exploit_set]
-    return np.concatenate([max_ranked[:n_exploit], np.array(explore)])
+    probability_array = np.asarray(probabilities)
+    n_exploit_samples = int(len(probability_array) * exploit_ratio)
+    relevance_ranked = rank_by_max_relevance(probability_array)
+    random_ranked = rank_by_random(len(probability_array), seed)
+    exploit_set = set(relevance_ranked[:n_exploit_samples].tolist())
+    explore = [i for i in random_ranked if i not in exploit_set]
+    return np.concatenate([relevance_ranked[:n_exploit_samples], np.array(explore)])
 
 
 def select_query_batch(probabilities, strategy='uncertainty', batch_size=20, seed=42):
-    probs = np.asarray(probabilities)
+    probability_array = np.asarray(probabilities)
     ranked = {
-        'uncertainty': lambda: rank_by_uncertainty(probs),
-        'random': lambda: rank_by_random(len(probs), seed),
-        'max_relevance': lambda: rank_by_max_relevance(probs),
-        'hybrid_max_uncertainty': lambda: rank_by_hybrid_max_uncertainty(probs, seed=seed),
-        'hybrid_max_random': lambda: rank_by_hybrid_max_random(probs, seed=seed),
+        'uncertainty': lambda: rank_by_uncertainty(probability_array),
+        'random': lambda: rank_by_random(len(probability_array), seed),
+        'max_relevance': lambda: rank_by_max_relevance(probability_array),
+        'hybrid_max_uncertainty': lambda: rank_by_hybrid_max_uncertainty(probability_array, seed=seed),
+        'hybrid_max_random': lambda: rank_by_hybrid_max_random(probability_array, seed=seed),
     }[strategy]()
     return ranked[:batch_size]
 
 
 def create_review_batch(df, indices, probabilities):
     """Subset df for human review with model probability and prediction."""
-    probs = np.asarray(probabilities)
+    probability_array = np.asarray(probabilities)
     batch = df.iloc[indices].copy()
-    batch['model_probability'] = probs[indices]
-    batch['model_prediction'] = (probs[indices] >= 0.5).astype(int)
+    batch['model_probability'] = probability_array[indices]
+    batch['model_prediction'] = (probability_array[indices] >= 0.5).astype(int)
     return batch
 
 
@@ -90,7 +90,7 @@ def merge_human_labels(df, review_batch, label_col='human_label'):
 
 def simulate_al(df, label_col, model_fn, strategy='uncertainty', batch_size=20,
                  initial_pct=0.1, max_iterations=50, seed=42):
-    """Offline AL simulation using ground truth labels. model_fn(train_df, unlabeled_df) -> probabilities."""
+    """Offline active learning simulation using ground truth labels. model_fn(train_df, unlabeled_df) -> probabilities."""
     rng = np.random.RandomState(seed)
     n = len(df)
     initial_n = max(int(n * initial_pct), 2 * batch_size)
@@ -108,13 +108,13 @@ def simulate_al(df, label_col, model_fn, strategy='uncertainty', batch_size=20,
         if not state.unlabeled_indices:
             break
 
-        train_df = df.iloc[state.labeled_indices]
+        training_df = df.iloc[state.labeled_indices]
         unlabeled_df = df.iloc[state.unlabeled_indices]
-        probs = model_fn(train_df, unlabeled_df)
+        predicted_probabilities = model_fn(training_df, unlabeled_df)
 
-        query_idx = select_query_batch(probs, strategy=strategy, batch_size=batch_size, seed=seed + iteration)
+        query_index = select_query_batch(predicted_probabilities, strategy=strategy, batch_size=batch_size, seed=seed + iteration)
         n_unlabeled = len(state.unlabeled_indices)
-        actual_indices = [state.unlabeled_indices[i] for i in query_idx if i < n_unlabeled]
+        actual_indices = [state.unlabeled_indices[i] for i in query_index if i < n_unlabeled]
 
         state.labeled_indices.extend(actual_indices)
         state.unlabeled_indices = [i for i in state.unlabeled_indices if i not in set(actual_indices)]
@@ -137,13 +137,13 @@ def simulate_al(df, label_col, model_fn, strategy='uncertainty', batch_size=20,
 
 def compare_reviewers(model_predictions, human_labels):
     """Agreement rate, Cohen's kappa, and disagreement indices."""
-    model_preds = np.asarray(model_predictions)
-    human = np.asarray(human_labels)
-    agreed = np.sum(model_preds == human)
-    kappa = cohen_kappa_score(model_preds, human) if len(set(model_preds) | set(human)) > 1 else 1.0
-    disagreement_indices = np.where(model_preds != human)[0]
+    model_prediction_array = np.asarray(model_predictions)
+    human_label_array = np.asarray(human_labels)
+    agreed = np.sum(model_prediction_array == human_label_array)
+    kappa = cohen_kappa_score(model_prediction_array, human_label_array) if len(set(model_prediction_array) | set(human_label_array)) > 1 else 1.0
+    disagreement_indices = np.where(model_prediction_array != human_label_array)[0]
     return {
-        'agreement_rate': agreed / len(human),
+        'agreement_rate': agreed / len(human_label_array),
         'kappa': kappa,
         'disagreement_indices': disagreement_indices.tolist(),
     }

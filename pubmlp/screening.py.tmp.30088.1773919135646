@@ -225,9 +225,9 @@ def regex_screen(input_file: str, inclusion_patterns: Dict, output_file: str = N
         with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
             df.to_excel(writer, sheet_name='Screening Results', index=False)
             ws = writer.sheets['Screening Results']
-            for col_index, col in enumerate(df.columns, 1):
+            for idx, col in enumerate(df.columns, 1):
                 max_len = max(df[col].astype(str).apply(len).max(), len(col))
-                ws.column_dimensions[get_column_letter(col_index)].width = min(max_len + 2, 100)
+                ws.column_dimensions[get_column_letter(idx)].width = min(max_len + 2, 100)
         logger.info(f"Saved: {output_file}")
     except ImportError:
         df.to_csv(str(output_file).replace('.xlsx', '.csv'), index=False)

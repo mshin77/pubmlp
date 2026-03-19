@@ -69,8 +69,8 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
 
     # Handle pos_weight for BCEWithLogitsLoss
     if pos_weight == 'auto':
-        pw = calculate_pos_weight(train_dataloader, device)
-        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pw)
+        computed_pos_weight = calculate_pos_weight(train_dataloader, device)
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=computed_pos_weight)
     elif pos_weight is not None:
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
@@ -126,12 +126,12 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
             best_model_state = {k: v.clone() for k, v in model.state_dict().items()}
             best_epoch = epoch + 1
             patience_counter = 0
-            print(f'Epoch: {epoch+1:04d}/{epochs:04d} | Train Loss: {train_loss:.3f} | Val Loss: {validation_loss:.3f} *** Best ***')
+            print(f'Epoch: {epoch+1:04d}/{epochs:04d} | Training Loss: {train_loss:.3f} | Validation Loss: {validation_loss:.3f} *** Best ***')
         else:
             patience_counter += 1
-            print(f'Epoch: {epoch+1:04d}/{epochs:04d} | Train Loss: {train_loss:.3f} | Val Loss: {validation_loss:.3f}')
+            print(f'Epoch: {epoch+1:04d}/{epochs:04d} | Training Loss: {train_loss:.3f} | Validation Loss: {validation_loss:.3f}')
 
-        print(f'Train Acc: {train_accuracy:.3f}% | Val Acc: {validation_accuracy:.3f}% | {(time.time() - start_time)/60:.2f} min')
+        print(f'Training Accuracy: {train_accuracy:.3f}% | Validation Accuracy: {validation_accuracy:.3f}% | {(time.time() - start_time)/60:.2f} min')
 
         if scheduler is not None and isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             scheduler.step(validation_loss)
@@ -146,10 +146,10 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
 
     if test_dataloader is not None:
         test_accuracy = calculate_accuracy(model, test_dataloader, device)
-        print(f'Test Accuracy: {test_accuracy:.3f}% | Best epoch {best_epoch} (val loss: {best_val_loss:.3f})')
+        print(f'Test Accuracy: {test_accuracy:.3f}% | Best epoch {best_epoch} (validation loss: {best_val_loss:.3f})')
     else:
         test_accuracy = None
-        print(f'Best epoch {best_epoch} (val loss: {best_val_loss:.3f})')
+        print(f'Best epoch {best_epoch} (validation loss: {best_val_loss:.3f})')
 
     return (train_losses, validation_losses, train_accuracies, validation_accuracies,
             test_accuracy, best_val_loss, best_model_state, best_epoch)

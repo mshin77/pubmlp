@@ -16,7 +16,7 @@ def plot_results(train_losses, validation_losses, train_accuracies, validation_a
     ax1.plot(epochs, train_losses, linewidth=2, label='Training Loss')
     ax1.plot(epochs, validation_losses, linewidth=2, label='Validation Loss')
     ax1.scatter(best_x, best_val_loss, color='red', marker='o', s=80, zorder=5,
-                label=f'Best Val Loss: {best_val_loss:.3f}')
+                label=f'Best Validation Loss: {best_val_loss:.3f}')
     ax1.set_title('Loss', fontsize=15, fontweight='bold')
     ax1.set_xlabel('Epoch', fontsize=13)
     ax1.set_ylabel('Loss', fontsize=13)
@@ -35,4 +35,47 @@ def plot_results(train_losses, validation_losses, train_accuracies, validation_a
     ax2.tick_params(labelsize=12)
 
     fig.tight_layout()
+    plt.show()
+
+
+def plot_al_progress(al_history, criteria=None, x_col='n_coded', save_path=None):
+    """
+    Plot active learning progress: macro F1 vs human effort + per-criterion F1.
+
+    Args:
+        al_history: list of dicts or DataFrame with iteration metrics.
+        criteria: list of criterion names (auto-detected from columns ending in _f1 if None).
+        x_col: column for x-axis (default 'n_coded').
+        save_path: path to save figure (optional).
+    """
+    import pandas as pd
+    al_df = pd.DataFrame(al_history) if not isinstance(al_history, pd.DataFrame) else al_history
+
+    if len(al_df) < 2:
+        print("Need at least 2 iterations to plot AL progress.")
+        return
+
+    if criteria is None:
+        criteria = [c.replace('_f1', '') for c in al_df.columns if c.endswith('_f1')]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+    ax1.plot(al_df[x_col], al_df['macro_f1'], 'o-', linewidth=2, markersize=5)
+    ax1.set_xlabel('Records Coded')
+    ax1.set_ylabel('Macro F1')
+    ax1.set_title('Performance vs Human Effort', fontweight='bold')
+    ax1.grid(alpha=0.3)
+
+    for c in criteria:
+        if f'{c}_f1' in al_df.columns:
+            ax2.plot(al_df[x_col], al_df[f'{c}_f1'], 'o-', linewidth=1.5, markersize=3, label=c)
+    ax2.set_xlabel('Records Coded')
+    ax2.set_ylabel('F1')
+    ax2.set_title('Per-Criterion F1', fontweight='bold')
+    ax2.legend(fontsize=8)
+    ax2.grid(alpha=0.3)
+
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.show()

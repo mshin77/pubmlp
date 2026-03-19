@@ -5,7 +5,7 @@ Fuses transformer embeddings with tabular features through a multilayer
 perceptron (MLP) for human-in-the-loop screening workflows.
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __author__ = "Mikyung Shin"
 __license__ = "MIT"
 
@@ -15,7 +15,7 @@ from .train import train_evaluate_model, calculate_loss, calculate_accuracy, cal
 from .predict import predict_model, get_predictions_and_labels, flag_uncertain
 from .metrics import calculate_evaluation_metrics, calculate_wss_at_recall, calculate_ndcg
 from .preprocess import preprocess_dataset, create_dataloader, split_data, CustomDataset, collate_fn, FittedTransforms
-from .plotting import plot_results
+from .plotting import plot_results, plot_al_progress
 from .utils import get_device, auto_batch_size, load_data, unpack_batch
 from .cv import cross_validate
 from .calibration import TemperatureScaling, collect_logits, calibrate_model
@@ -32,7 +32,7 @@ __all__ = [
     'predict_model', 'get_predictions_and_labels', 'flag_uncertain',
     'calculate_evaluation_metrics', 'calculate_wss_at_recall', 'calculate_ndcg',
     'preprocess_dataset', 'create_dataloader', 'split_data', 'CustomDataset', 'collate_fn', 'FittedTransforms',
-    'plot_results',
+    'plot_results', 'plot_al_progress',
     'get_device', 'auto_batch_size', 'load_data', 'unpack_batch',
     'cross_validate',
     'TemperatureScaling', 'collect_logits', 'calibrate_model',

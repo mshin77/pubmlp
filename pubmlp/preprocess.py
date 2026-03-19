@@ -6,17 +6,59 @@ import torch
 from sklearn.preprocessing import QuantileTransformer, RobustScaler
 
 
-def split_data(data, random_state=42):
-    """Split data into 80% train, 10% validation, 10% test."""
+def split_data(data, random_state=42, test_pct=0.10, validation_pct=0.10,
+               min_test=20, min_validation=20, id_col=None,
+               test_keys=None, validation_keys=None):
+    """
+    Split data into training, validation, and test sets.
+
+    Basic usage returns 3 DataFrames (backward compatible):
+        train_df, validation_df, test_df = split_data(df)
+
+    With id_col, returns 5 values for persistent splits across active learning iterations:
+        train_df, validation_df, test_df, test_keys, validation_keys = split_data(df, id_col='an')
+
+    Args:
+        data: DataFrame to split.
+        random_state: Random seed for shuffling.
+        test_pct: Fraction for test set (default 0.10).
+        validation_pct: Fraction for validation set (default 0.10).
+        min_test: Minimum test set size.
+        min_validation: Minimum validation set size.
+        id_col: Column name for persistent key-based splits. When provided, returns 5 values.
+        test_keys: Previously saved test keys to restore split.
+        validation_keys: Previously saved validation keys to restore split.
+
+    Returns:
+        Without id_col: (training_df, validation_df, test_df)
+        With id_col: (training_df, validation_df, test_df, test_keys, validation_keys)
+    """
+    if id_col and test_keys and validation_keys:
+        held_out = set(test_keys) | set(validation_keys)
+        test_df = data[data[id_col].isin(test_keys)].copy()
+        validation_df = data[data[id_col].isin(validation_keys)].copy()
+        training_df = data[~data[id_col].isin(held_out)].copy()
+        return training_df, validation_df, test_df, test_keys, validation_keys
+
     shuffled = data.sample(frac=1, random_state=random_state)
-    n = len(shuffled)
-    train_end, val_end = int(0.8 * n), int(0.9 * n)
-    return shuffled.iloc[:train_end], shuffled.iloc[train_end:val_end], shuffled.iloc[val_end:]
+    n_test = max(int(test_pct * len(shuffled)), min_test)
+    n_validation = max(int(validation_pct * len(shuffled)), min_validation)
+
+    test_df = shuffled.iloc[:n_test]
+    validation_df = shuffled.iloc[n_test:n_test + n_validation]
+    training_df = shuffled.iloc[n_test + n_validation:]
+
+    if id_col:
+        out_test_keys = test_df[id_col].tolist()
+        out_validation_keys = validation_df[id_col].tolist()
+        return training_df.copy(), validation_df.copy(), test_df.copy(), out_test_keys, out_validation_keys
+
+    return training_df.copy(), validation_df.copy(), test_df.copy()
 
 
 @dataclass
 class FittedTransforms:
-    """Stores fitted parameters from training data for reuse on val/test."""
+    """Stores fitted parameters from training data for reuse on validation/test."""
     categorical_vocabs: dict = field(default_factory=dict)
     numeric_params: dict = field(default_factory=dict)
 
@@ -99,16 +141,16 @@ class CustomDataset(Dataset):
         self.numeric_tensor = numeric_tensor if numeric_tensor is not None else torch.tensor([], dtype=torch.float)
         self.texts = texts
 
-    def __getitem__(self, idx):
+    def __getitem__(self, index):
         item = {
-            'input_ids': self.input_ids[idx],
-            'attention_mask': self.attention_mask[idx],
-            'labels': self.labels[idx],
-            'categorical_tensor': self.categorical_tensor[idx] if self.categorical_tensor.numel() > 0 else self.categorical_tensor,
-            'numeric_tensor': self.numeric_tensor[idx] if self.numeric_tensor.numel() > 0 else self.numeric_tensor,
+            'input_ids': self.input_ids[index],
+            'attention_mask': self.attention_mask[index],
+            'labels': self.labels[index],
+            'categorical_tensor': self.categorical_tensor[index] if self.categorical_tensor.numel() > 0 else self.categorical_tensor,
+            'numeric_tensor': self.numeric_tensor[index] if self.numeric_tensor.numel() > 0 else self.numeric_tensor,
         }
         if self.texts is not None:
-            item['texts'] = self.texts[idx]
+            item['texts'] = self.texts[index]
         return item
 
     def __len__(self):
@@ -119,19 +161,19 @@ def _build_categorical_vocab(series, rare_threshold=5):
     """Build value->index mapping. Index 0=<UNK>, 1=<RARE>, 2+=actual values."""
     counts = series.value_counts()
     vocab = {'<UNK>': 0, '<RARE>': 1}
-    idx = 2
+    next_index = 2
     for val, count in counts.items():
         if count >= rare_threshold:
-            vocab[val] = idx
-            idx += 1
+            vocab[val] = next_index
+            next_index += 1
     return vocab
 
 
 def _encode_categorical(series, vocab):
     """Map series values to integer indices using vocab."""
-    rare_idx = vocab['<RARE>']
-    unk_idx = vocab['<UNK>']
-    return series.map(lambda v: vocab.get(v, rare_idx) if pd.notna(v) else unk_idx)
+    rare_index = vocab['<RARE>']
+    unknown_index = vocab['<UNK>']
+    return series.map(lambda v: vocab.get(v, rare_index) if pd.notna(v) else unknown_index)
 
 
 def _fit_numeric(series, transform):
@@ -240,7 +282,7 @@ def preprocess_dataset(data, tokenizer, device, column_specifications, numeric_t
     else:
         categorical_tensor = torch.tensor([], dtype=torch.long).to(device)
 
-    # Numeric normalization — fit on train, apply stored params on val/test
+    # Numeric normalization — fit on training, apply stored params on validation/test
     numeric_cols = column_specifications.get("numeric_cols", [])
     if numeric_cols:
         numeric_values = []

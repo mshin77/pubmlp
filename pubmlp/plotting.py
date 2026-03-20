@@ -38,14 +38,22 @@ def plot_results(train_losses, validation_losses, train_accuracies, validation_a
     plt.show()
 
 
-def plot_al_progress(al_history, criteria=None, x_col='n_coded', save_path=None):
+def plot_al_progress(al_history, criteria=None, x_col='n_coded',
+                     show_per_label=False, save_path=None):
     """
-    Plot active learning progress: macro F1 vs human effort + per-criterion F1.
+    Plot active learning progress as a learning curve.
+
+    Single plot showing Macro F1 vs number of labeled instances.
+    For multi-label tasks, optionally overlays per-criterion F1 lines.
 
     Args:
-        al_history: list of dicts or DataFrame with iteration metrics.
-        criteria: list of criterion names (auto-detected from columns ending in _f1 if None).
+        al_history: list of dicts or DataFrame with columns including
+            ``macro_f1`` and ``{criterion}_f1`` per iteration.
+        criteria: list of criterion names (auto-detected from ``_f1``
+            columns if None).
         x_col: column for x-axis (default 'n_coded').
+        show_per_label: if True, overlay per-criterion F1 as thin lines.
+            Ignored when there is only one criterion.
         save_path: path to save figure (optional).
     """
     import pandas as pd
@@ -58,22 +66,23 @@ def plot_al_progress(al_history, criteria=None, x_col='n_coded', save_path=None)
     if criteria is None:
         criteria = [c.replace('_f1', '') for c in al_df.columns if c.endswith('_f1')]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    fig, ax = plt.subplots(figsize=(8, 5))
 
-    ax1.plot(al_df[x_col], al_df['macro_f1'], 'o-', linewidth=2, markersize=5)
-    ax1.set_xlabel('Records Coded')
-    ax1.set_ylabel('Macro F1')
-    ax1.set_title('Performance vs Human Effort', fontweight='bold')
-    ax1.grid(alpha=0.3)
+    ax.plot(al_df[x_col], al_df['macro_f1'], 'o-', linewidth=2.5,
+            markersize=6, color='#1f77b4', label='Macro F1', zorder=3)
 
-    for c in criteria:
-        if f'{c}_f1' in al_df.columns:
-            ax2.plot(al_df[x_col], al_df[f'{c}_f1'], 'o-', linewidth=1.5, markersize=3, label=c)
-    ax2.set_xlabel('Records Coded')
-    ax2.set_ylabel('F1')
-    ax2.set_title('Per-Criterion F1', fontweight='bold')
-    ax2.legend(fontsize=8)
-    ax2.grid(alpha=0.3)
+    if show_per_label and len(criteria) > 1:
+        for c in criteria:
+            if f'{c}_f1' in al_df.columns:
+                ax.plot(al_df[x_col], al_df[f'{c}_f1'], '--',
+                        linewidth=1, markersize=3, alpha=0.6, label=c)
+
+    ax.set_xlabel('Number of Labeled Instances', fontsize=12)
+    ax.set_ylabel('F1 Score', fontsize=12)
+    ax.set_title('Active Learning Progress', fontsize=14, fontweight='bold')
+    ax.legend(fontsize=9)
+    ax.grid(alpha=0.3)
+    ax.tick_params(labelsize=11)
 
     fig.tight_layout()
     if save_path:

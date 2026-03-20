@@ -6,7 +6,13 @@ import pandas as pd
 import numpy as np
 import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
+
+try:
+    from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
+    _HAS_ITERSTRAT = True
+except ImportError:
+    _HAS_ITERSTRAT = False
 
 
 def count_pattern_matches(text, pattern):
@@ -43,22 +49,36 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
                              coding_labels: List[str] = None,
                              sample_size: float = 0.2,
                              random_seed: int = 42,
-                             n_strata: int = 5) -> pd.DataFrame:
+                             semantic_threshold: Union[str, float] = 'median') -> pd.DataFrame:
     """
-    Create a stratified random sample with regex pattern highlights.
+    Create a stratified random sample using iterative stratification.
+
+    Stratifies on binary regex flags and semantic score levels per criterion
+    using Sechidis et al. (2011) iterative stratification via iterstrat.
 
     Args:
-        df: Input DataFrame.
-        patterns: Dict of {label: regex_pattern} for highlighting.
-        text_cols: Columns to combine for pattern matching (default: title, abstract, keywords).
-        coding_labels: Label columns to add for human coding (default: pattern keys).
+        df: Input DataFrame with binary criterion columns and optional
+            ``{criterion}_semantic_max`` columns.
+        patterns: Dict of {criterion: regex_pattern} for highlighting.
+        text_cols: Columns to combine for pattern matching
+            (default: title, abstract, keywords).
+        coding_labels: Label columns to add for human coding
+            (default: pattern keys).
         sample_size: Proportion to sample (default 0.2).
         random_seed: For reproducibility.
-        n_strata: Number of stratification bins.
+        semantic_threshold: Threshold for binarizing semantic scores.
+            'median' (default) uses per-criterion median of non-zero scores.
+            A float (e.g., 0.5) applies a fixed threshold across all criteria.
 
     Returns:
         DataFrame with pattern highlights and empty coding columns.
     """
+    if not _HAS_ITERSTRAT:
+        raise ImportError(
+            "iterstrat is required for stratified sampling. "
+            "Install: pip install iterative-stratification"
+        )
+
     if text_cols is None:
         text_cols = ['title', 'abstract', 'keywords']
     if coding_labels is None:
@@ -70,31 +90,53 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
 
     # Add pattern count and snippet columns
     for label, pattern in patterns.items():
-        df[f'{label}_pattern_count'] = df['_combined_text'].apply(lambda x: count_pattern_matches(x, pattern))
-        df[f'{label}_pattern_snippets'] = df['_combined_text'].apply(lambda x: highlight_pattern_matches(x, pattern))
+        df[f'{label}_pattern_count'] = df['_combined_text'].apply(
+            lambda x, p=pattern: count_pattern_matches(x, p))
+        df[f'{label}_pattern_snippets'] = df['_combined_text'].apply(
+            lambda x, p=pattern: highlight_pattern_matches(x, p))
 
-    # Total score for stratification
-    count_cols = [f'{label}_pattern_count' for label in patterns]
-    df['_total_pattern_score'] = df[count_cols].sum(axis=1)
+    # Build binary label matrix for iterative stratification
+    criteria = list(patterns.keys())
+    strat_cols = []
 
-    # Stratified sampling - handle case where all values are identical
-    all_strata_labels = ['very_low', 'low', 'medium', 'high', 'very_high']
-    if df['_total_pattern_score'].nunique() <= 1:
-        df['strata'] = 'uniform'
-    else:
-        df['strata'] = pd.qcut(df['_total_pattern_score'], q=n_strata, duplicates='drop')
-        n_actual_strata = len(df['strata'].cat.categories)
-        strata_labels = all_strata_labels[:n_actual_strata]
-        df['strata'] = df['strata'].cat.rename_categories(strata_labels)
+    # Binary regex flags
+    for c in criteria:
+        col = f'_strat_{c}'
+        df[col] = (df[c].fillna(0).astype(int) if c in df.columns
+                   else (df[f'{c}_pattern_count'] > 0).astype(int))
+        strat_cols.append(col)
 
-    sample_df = df.groupby('strata', group_keys=False, observed=True).apply(
-        lambda x: x.sample(frac=sample_size, random_state=random_seed), include_groups=False
-    ).reset_index(drop=True)
+    # Binary semantic score levels (high/low)
+    for c in criteria:
+        sem_col = f'{c}_semantic_max'
+        strat_col = f'_strat_{c}_sem_high'
+        if sem_col in df.columns:
+            scores = df[sem_col].fillna(0)
+            nonzero = scores[scores > 0]
+            if len(nonzero) > 0:
+                if semantic_threshold == 'median':
+                    thresh = nonzero.median()
+                else:
+                    thresh = float(semantic_threshold)
+                df[strat_col] = (scores >= thresh).astype(int)
+                strat_cols.append(strat_col)
 
-    # Print strata distribution before cleanup
-    print(f"Created sample: {len(sample_df)} records ({sample_size*100:.0f}%)")
-    if 'strata' in sample_df.columns:
-        print(f"Strata distribution:\n{sample_df['strata'].value_counts().sort_index()}")
+    # Iterative stratification
+    y = df[strat_cols].values
+    X = np.arange(len(df)).reshape(-1, 1)
+    msss = MultilabelStratifiedShuffleSplit(
+        n_splits=1, test_size=1 - sample_size, random_state=random_seed
+    )
+    sample_idx, _ = next(msss.split(X, y))
+    sample_df = df.iloc[sample_idx].reset_index(drop=True)
+
+    print(f"Created sample: {len(sample_df)} records ({sample_size * 100:.0f}%)")
+    for col in strat_cols:
+        label = col.replace('_strat_', '')
+        pos = sample_df[col].sum()
+        pct = pos / len(sample_df) * 100
+        pop_pct = df[col].sum() / len(df) * 100
+        print(f"  {label:30s}: {pos:4d} ({pct:5.1f}%) [population: {pop_pct:.1f}%]")
 
     # Add empty coding columns
     for label in coding_labels:
@@ -104,7 +146,8 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
     sample_df['coding_date'] = ''
 
     # Clean up temp columns
-    sample_df = sample_df.drop(columns=['_combined_text', '_total_pattern_score', 'strata'], errors='ignore')
+    temp_cols = ['_combined_text'] + [c for c in sample_df.columns if c.startswith('_strat_')]
+    sample_df = sample_df.drop(columns=temp_cols, errors='ignore')
 
     return sample_df
 

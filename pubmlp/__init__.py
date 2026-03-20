@@ -5,7 +5,7 @@ Fuses transformer embeddings with tabular features through a multilayer
 perceptron (MLP) for human-in-the-loop screening workflows.
 """
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 __author__ = "Mikyung Shin"
 __license__ = "MIT"
 

@@ -133,12 +133,12 @@ def calculate_wss_at_recall(true_labels, probabilities, target_recall=0.95):
     n_total = len(true_array)
     n_relevant = true_array.sum()
     if n_relevant == 0:
-        return {'wss': 0.0, 'screened_pct': 1.0, 'recall_achieved': 0.0}
+        return {'wss': np.nan, 'screened_pct': np.nan, 'recall_achieved': np.nan}
 
     ranked = np.argsort(-probability_array)
     cumulative_relevant = np.cumsum(true_array[ranked])
     target_count = int(np.ceil(target_recall * n_relevant))
-    screened_to_target = np.searchsorted(cumulative_relevant, target_count) + 1
+    screened_to_target = min(np.searchsorted(cumulative_relevant, target_count) + 1, len(cumulative_relevant))
     screened_pct = screened_to_target / n_total
     wss = (1 - screened_pct) - (1 - target_recall)
     return {

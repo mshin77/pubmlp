@@ -1,4 +1,5 @@
 import math
+import numpy as np
 from dataclasses import dataclass, field, asdict
 
 
@@ -57,8 +58,10 @@ def transition_phase(state, config, total_records):
 
 def estimate_recall(state, total_records):
     """Wilson score lower bound estimate of recall."""
-    if state.total_screened == 0 or state.total_relevant == 0:
-        return 0.0
+    if state.total_screened == 0:
+        return np.nan
+    if state.total_relevant == 0:
+        return np.nan
     # Proportion of relevant found so far
     p = state.total_relevant / state.total_screened
     n = state.total_screened
@@ -71,14 +74,14 @@ def estimate_recall(state, total_records):
     # Estimated total relevant in full corpus
     estimated_total = lower * total_records
     if estimated_total == 0:
-        return 0.0
+        return np.nan
     return min(state.total_relevant / estimated_total, 1.0)
 
 
 def calculate_wss(total_records, total_screened, recall):
     """Work Saved over Sampling at given recall level."""
-    if total_records == 0:
-        return 0.0
+    if total_records == 0 or (isinstance(recall, float) and np.isnan(recall)):
+        return np.nan
     return (total_records - total_screened) / total_records - (1 - recall)
 
 

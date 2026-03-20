@@ -10,9 +10,9 @@ from typing import Dict, List, Union
 
 try:
     from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
-    _HAS_ITERSTRAT = True
+    _has_iterstrat = True
 except ImportError:
-    _HAS_ITERSTRAT = False
+    _has_iterstrat = False
 
 
 def count_pattern_matches(text, pattern):
@@ -21,7 +21,7 @@ def count_pattern_matches(text, pattern):
         return 0
     try:
         return len(re.findall(pattern, str(text), re.IGNORECASE))
-    except Exception:
+    except (re.error, TypeError):
         return 0
 
 
@@ -40,7 +40,7 @@ def highlight_pattern_matches(text, pattern, max_length=200):
             snippets.append(f"...{text[start:end].strip()}...")
         result = ' | '.join(snippets)
         return result[:max_length] if len(result) > max_length else result
-    except Exception:
+    except (re.error, TypeError):
         return ''
 
 
@@ -73,7 +73,7 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
     Returns:
         DataFrame with pattern highlights and empty coding columns.
     """
-    if not _HAS_ITERSTRAT:
+    if not _has_iterstrat:
         raise ImportError(
             "iterstrat is required for stratified sampling. "
             "Install: pip install iterative-stratification"
@@ -121,13 +121,20 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
                 df[strat_col] = (scores >= thresh).astype(int)
                 strat_cols.append(strat_col)
 
-    # Iterative stratification
+    # Stratified sampling
     y = df[strat_cols].values
     X = np.arange(len(df)).reshape(-1, 1)
-    msss = MultilabelStratifiedShuffleSplit(
-        n_splits=1, test_size=1 - sample_size, random_state=random_seed
-    )
-    sample_idx, _ = next(msss.split(X, y))
+    if y.shape[1] >= 2 and _has_iterstrat:
+        msss = MultilabelStratifiedShuffleSplit(
+            n_splits=1, test_size=1 - sample_size, random_state=random_seed
+        )
+        sample_idx, _ = next(msss.split(X, y))
+    else:
+        from sklearn.model_selection import StratifiedShuffleSplit
+        sss = StratifiedShuffleSplit(
+            n_splits=1, test_size=1 - sample_size, random_state=random_seed
+        )
+        sample_idx, _ = next(sss.split(X, y[:, 0]))
     sample_df = df.iloc[sample_idx].reset_index(drop=True)
 
     print(f"Created sample: {len(sample_df)} records ({sample_size * 100:.0f}%)")

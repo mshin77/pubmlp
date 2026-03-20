@@ -125,7 +125,7 @@ def simulate_al(df, label_col, model_fn, strategy='uncertainty', batch_size=20,
             'iteration': iteration + 1,
             'n_labeled': len(state.labeled_indices),
             'n_relevant_found': int(relevant_found),
-            'recall': relevant_found / total_relevant if total_relevant > 0 else 0.0,
+            'recall': relevant_found / total_relevant if total_relevant > 0 else np.nan,
             'screened_pct': len(state.labeled_indices) / n,
         })
 

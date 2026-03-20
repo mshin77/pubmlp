@@ -1,9 +1,12 @@
 from dataclasses import dataclass, field
+import logging
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset, Sampler, DataLoader
 import torch
 from sklearn.preprocessing import QuantileTransformer, RobustScaler
+
+logger = logging.getLogger(__name__)
 
 
 def split_data(data, random_state=42, test_pct=0.10, validation_pct=0.10,
@@ -179,13 +182,15 @@ def _encode_categorical(series, vocab):
 def _fit_numeric(series, transform):
     """Fit numeric transform on training data, return params dict."""
     clean = series.dropna()
-    params = {'transform': transform, 'median': float(clean.median()) if len(clean) > 0 else 0.0}
+    if len(clean) == 0:
+        logger.warning(f"No non-null values for numeric transform '{transform}'; using NaN defaults")
+    params = {'transform': transform, 'median': float(clean.median()) if len(clean) > 0 else np.nan}
     if transform == 'min':
-        params['min_val'] = float(clean.min()) if len(clean) > 0 else 0.0
+        params['min_val'] = float(clean.min()) if len(clean) > 0 else np.nan
     elif transform == 'max':
-        params['max_val'] = float(clean.max()) if len(clean) > 0 else 1.0
+        params['max_val'] = float(clean.max()) if len(clean) > 0 else np.nan
     elif transform == 'mean':
-        params['mean_val'] = float(clean.mean()) if len(clean) > 0 else 0.0
+        params['mean_val'] = float(clean.mean()) if len(clean) > 0 else np.nan
     elif transform in ('quantile', 'log1p'):
         values = clean.values.reshape(-1, 1)
         if transform == 'log1p':

@@ -69,7 +69,7 @@ def extract_sentence_evidence(text: str, pattern: str, field_name: str) -> List[
 
     try:
         sentences = sent_tokenize(text)
-    except Exception:
+    except (LookupError, TypeError):
         sentences = text.split('. ')
 
     evidence = []
@@ -114,7 +114,7 @@ def format_evidence_display(evidence_list: List[Dict]) -> str:
 def calculate_semantic_scores(evidence_list: List[Dict], criterion_description: str, model) -> Dict:
     """Calculate cosine similarity between evidence texts and criterion description."""
     if not evidence_list or model is None:
-        return {'individual_scores': [], 'mean_score': 0.0, 'max_score': 0.0, 'count': 0}
+        return {'individual_scores': [], 'mean_score': np.nan, 'max_score': np.nan, 'count': 0}
 
     texts = [item['text'] for item in evidence_list]
     try:
@@ -124,13 +124,13 @@ def calculate_semantic_scores(evidence_list: List[Dict], criterion_description: 
         scores = similarities.flatten().tolist()
         return {
             'individual_scores': scores,
-            'mean_score': float(np.mean(scores)) if scores else 0.0,
-            'max_score': float(max(scores)) if scores else 0.0,
+            'mean_score': float(np.mean(scores)) if scores else np.nan,
+            'max_score': float(max(scores)) if scores else np.nan,
             'count': len(scores),
         }
     except Exception as e:
         logger.error(f"Semantic scoring failed: {e}")
-        return {'individual_scores': [], 'mean_score': 0.0, 'max_score': 0.0, 'count': 0}
+        return {'individual_scores': [], 'mean_score': np.nan, 'max_score': np.nan, 'count': 0}
 
 
 def regex_screen(input_file: str, inclusion_patterns: Dict, output_file: str = None,

@@ -116,7 +116,7 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
             save_figures=output_dir is not None,
             label_names=label_names,
         )
-        best_epoch_accuracy = validation_accuracies[best_epoch - 1] if validation_accuracies and best_epoch > 0 else 0.0
+        best_epoch_accuracy = validation_accuracies[best_epoch - 1] if validation_accuracies and 0 < best_epoch <= len(validation_accuracies) else 0.0
         metrics.update({
             'best_epoch': best_epoch,
             'best_val_loss': best_val_loss,

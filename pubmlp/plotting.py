@@ -64,7 +64,8 @@ def plot_al_progress(al_history, criteria=None, x_col='n_coded',
         return
 
     if criteria is None:
-        criteria = [c.replace('_f1', '') for c in al_df.columns if c.endswith('_f1')]
+        criteria = [c.replace('_f1', '') for c in al_df.columns
+                    if c.endswith('_f1') and c != 'macro_f1']
 
     fig, ax = plt.subplots(figsize=(8, 5))
 

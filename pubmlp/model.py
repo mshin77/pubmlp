@@ -1,4 +1,6 @@
 import logging
+import sys
+import io
 import torch
 import torch.nn as nn
 from transformers import AutoModel
@@ -43,7 +45,10 @@ class PubMLP(nn.Module):
             _logger = logging.getLogger("transformers")
             _prev_level = _logger.level
             _logger.setLevel(logging.ERROR)
+            _old_stdout = sys.stdout
+            sys.stdout = io.StringIO()
             self.encoder = AutoModel.from_pretrained(self.model_name)
+            sys.stdout = _old_stdout
             _logger.setLevel(_prev_level)
             embedding_size = self.encoder.config.hidden_size
 

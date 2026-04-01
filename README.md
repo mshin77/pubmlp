@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/mshin77/pubmlp/main/docs_src/_static/logo.svg" alt="pubmlp Logo" align="right" width="220px"/>
+<img src="logo.svg" alt="pubmlp Logo" align="right" width="220px"/>
 
 [![PyPI version](https://img.shields.io/pypi/v/pubmlp)](https://pypi.org/project/pubmlp/)
 [![Python versions](https://img.shields.io/pypi/pyversions/pubmlp)](https://pypi.org/project/pubmlp/)

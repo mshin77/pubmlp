@@ -1,0 +1,45 @@
+# Changelog
+
+## 0.2.8 (2026-03-31)
+
+- Suppressed safetensors load report during model initialization
+
+## 0.2.7 (2026-03-19)
+
+- Updated version references across all files
+
+## 0.2.6 (2026-03-19)
+
+- Fixed 0.0 returns where NaN is correct (screening, stopping, metrics, active learning)
+- Added bounds check in WSS calculation and cross-validation
+- Single-criterion fallback for stratified sampling
+- Narrowed exception handling in sample and screening modules
+
+## 0.2.5 (2026-03-19)
+
+- Multi-label iterative stratification for seed sampling
+- Improved active learning progress plot
+
+## 0.2.3 (2026-03-19)
+
+- Standardized variable names and print messages
+- Added active learning progress plot and persistent data splits
+- Added changelog page
+
+## 0.2.2 (2026-03-18)
+
+- Device fallback and warning fixes
+- Bounds validation in active learning simulation
+
+## 0.2.1 (2026-03-17)
+
+- Pattern match highlighting and conditional formatting for Excel
+
+## 0.2.0 (2026-03-15)
+
+- Multi-label classification, active learning, SAFE stopping, audit trails
+- Calibration, cross-validation, regex screening, stratified sampling
+
+## 0.1.0 (2026-03-01)
+
+- Initial release with PubMLP model and 6 embedding backends

@@ -387,6 +387,10 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-all-evidence"><code class="docutils literal notranslate"><span class="pre">extract_all_evidence</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#format-evidence-display"><code class="docutils literal notranslate"><span class="pre">format_evidence_display</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-semantic-scores"><code class="docutils literal notranslate"><span class="pre">calculate_semantic_scores</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-descriptions"><code class="docutils literal notranslate"><span class="pre">generate_descriptions</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#confirm-descriptions"><code class="docutils literal notranslate"><span class="pre">confirm_descriptions</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#score-full-text"><code class="docutils literal notranslate"><span class="pre">score_full_text</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-screening-configs"><code class="docutils literal notranslate"><span class="pre">compare_screening_configs</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-stratified-sample"><code class="docutils literal notranslate"><span class="pre">create_stratified_sample</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#save-sample-excel"><code class="docutils literal notranslate"><span class="pre">save_sample_excel</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#apply-conditional-formatting"><code class="docutils literal notranslate"><span class="pre">apply_conditional_formatting</span></code></a></li>
@@ -901,6 +905,52 @@
 <section id="calculate-semantic-scores">
 <h3><code class="docutils literal notranslate"><span class="pre">calculate_semantic_scores</span></code><a class="headerlink" href="#calculate-semantic-scores" title="Link to this heading">#</a></h3>
 <p>Calculate cosine similarity between evidence texts and criterion description.</p>
+</section>
+<section id="generate-descriptions">
+<h3><code class="docutils literal notranslate"><span class="pre">generate_descriptions</span></code><a class="headerlink" href="#generate-descriptions" title="Link to this heading">#</a></h3>
+<p>Draft criterion descriptions from regex pattern terms. Extracts literal terms from each pattern and composes a natural language description. The user should review and refine each description before use.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pubmlp</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_descriptions</span>
+
+<span class="n">patterns</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;math&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;pattern&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;\b(algebra|geometry)\w*\b&#39;</span><span class="p">}}</span>
+<span class="n">drafts</span> <span class="o">=</span> <span class="n">generate_descriptions</span><span class="p">(</span><span class="n">patterns</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="s1">&#39;K-12 education&#39;</span><span class="p">)</span>
+<span class="c1"># drafts[&#39;math&#39;][&#39;description&#39;] → &quot;In K-12 education, the study addresses math...&quot;</span>
+<span class="c1"># drafts[&#39;math&#39;][&#39;source&#39;] → &#39;generated&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="confirm-descriptions">
+<h3><code class="docutils literal notranslate"><span class="pre">confirm_descriptions</span></code><a class="headerlink" href="#confirm-descriptions" title="Link to this heading">#</a></h3>
+<p>Validate that all criteria have non-empty descriptions and return confirmed patterns. Optionally saves to JSON for reproducibility. Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if any description is empty.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pubmlp</span><span class="w"> </span><span class="kn">import</span> <span class="n">confirm_descriptions</span>
+
+<span class="c1"># After user edits drafts[&#39;math&#39;][&#39;description&#39;]</span>
+<span class="n">confirmed</span> <span class="o">=</span> <span class="n">confirm_descriptions</span><span class="p">(</span><span class="n">drafts</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="s1">&#39;confirmed.json&#39;</span><span class="p">)</span>
+<span class="c1"># Returns dict ready for regex_screen() and score_full_text()</span>
+</pre></div>
+</div>
+</section>
+<section id="score-full-text">
+<h3><code class="docutils literal notranslate"><span class="pre">score_full_text</span></code><a class="headerlink" href="#score-full-text" title="Link to this heading">#</a></h3>
+<p>Score full record text (title + abstract) against each criterion description via cosine similarity. Scores all records including those with no regex match. Adds <code class="docutils literal notranslate"><span class="pre">{criterion}_semantic_full</span></code> column per criterion.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pubmlp</span><span class="w"> </span><span class="kn">import</span> <span class="n">score_full_text</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">score_full_text</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">confirmed_patterns</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s1">&#39;abstract&#39;</span><span class="p">])</span>
+<span class="c1"># df[&#39;math_semantic_full&#39;] → cosine similarity for every record</span>
+</pre></div>
+</div>
+</section>
+<section id="compare-screening-configs">
+<h3><code class="docutils literal notranslate"><span class="pre">compare_screening_configs</span></code><a class="headerlink" href="#compare-screening-configs" title="Link to this heading">#</a></h3>
+<p>Run <code class="docutils literal notranslate"><span class="pre">regex_screen</span></code> with multiple configurations (different descriptions, window sizes, units) and return a summary DataFrame comparing match counts, semantic score distributions, and overlap.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pubmlp</span><span class="w"> </span><span class="kn">import</span> <span class="n">compare_screening_configs</span>
+
+<span class="n">comparison</span> <span class="o">=</span> <span class="n">compare_screening_configs</span><span class="p">(</span><span class="s1">&#39;data.xlsx&#39;</span><span class="p">,</span> <span class="p">{</span>
+    <span class="s1">&#39;specific&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;inclusion_patterns&#39;</span><span class="p">:</span> <span class="n">patterns_v1</span><span class="p">},</span>
+    <span class="s1">&#39;broad&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;inclusion_patterns&#39;</span><span class="p">:</span> <span class="n">patterns_v2</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">:</span> <span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="s1">&#39;window_size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">},</span>
+<span class="p">})</span>
+<span class="c1"># Returns DataFrame: config, criterion, n_matched, match_pct, semantic medians</span>
+</pre></div>
+</div>
 </section>
 <section id="create-stratified-sample">
 <h3><code class="docutils literal notranslate"><span class="pre">create_stratified_sample</span></code><a class="headerlink" href="#create-stratified-sample" title="Link to this heading">#</a></h3>

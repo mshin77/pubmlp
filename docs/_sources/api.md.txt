@@ -220,6 +220,56 @@ Format evidence list as 'field: text; field: text; ...'.
 
 Calculate cosine similarity between evidence texts and criterion description.
 
+#### `generate_descriptions`
+
+Draft criterion descriptions from regex pattern terms. Extracts literal terms from each pattern and composes a natural language description. The user should review and refine each description before use.
+
+```python
+from pubmlp import generate_descriptions
+
+patterns = {'math': {'pattern': r'\b(algebra|geometry)\w*\b'}}
+drafts = generate_descriptions(patterns, domain='K-12 education')
+# drafts['math']['description'] → "In K-12 education, the study addresses math..."
+# drafts['math']['source'] → 'generated'
+```
+
+#### `confirm_descriptions`
+
+Validate that all criteria have non-empty descriptions and return confirmed patterns. Optionally saves to JSON for reproducibility. Raises `ValueError` if any description is empty.
+
+```python
+from pubmlp import confirm_descriptions
+
+# After user edits drafts['math']['description']
+confirmed = confirm_descriptions(drafts, save_path='confirmed.json')
+# Returns dict ready for regex_screen() and score_full_text()
+```
+
+#### `score_full_text`
+
+Score full record text (title + abstract) against each criterion description via cosine similarity. Scores all records including those with no regex match. Adds `{criterion}_semantic_full` column per criterion.
+
+```python
+from pubmlp import score_full_text
+
+df = score_full_text(df, confirmed_patterns, fields=['title', 'abstract'])
+# df['math_semantic_full'] → cosine similarity for every record
+```
+
+#### `compare_screening_configs`
+
+Run `regex_screen` with multiple configurations (different descriptions, window sizes, units) and return a summary DataFrame comparing match counts, semantic score distributions, and overlap.
+
+```python
+from pubmlp import compare_screening_configs
+
+comparison = compare_screening_configs('data.xlsx', {
+    'specific': {'inclusion_patterns': patterns_v1},
+    'broad': {'inclusion_patterns': patterns_v2, 'unit': 'window', 'window_size': 10},
+})
+# Returns DataFrame: config, criterion, n_matched, match_pct, semantic medians
+```
+
 #### `create_stratified_sample`
 
 Create a stratified random sample with regex pattern highlights for human coding.

@@ -5,7 +5,7 @@ Fuses transformer embeddings with tabular features through a multilayer
 perceptron (MLP) for human-in-the-loop screening workflows.
 """
 
-__version__ = "0.2.10"
+__version__ = "0.3.0"
 __author__ = "Mikyung Shin"
 __license__ = "MIT"
 
@@ -22,7 +22,7 @@ from .calibration import TemperatureScaling, collect_logits, calibrate_model
 from .audit import AuditTrail, AuditEntry, interpret_kappa, summarize_human_decisions, generate_prisma_report
 from .active_learning import ALState, select_query_batch, create_review_batch, compare_reviewers, merge_human_labels, simulate_al, rank_by_hybrid_max_uncertainty, rank_by_hybrid_max_random
 from .stopping import StoppingState, should_stop, update_stopping_state, generate_stopping_report, calculate_wss, transition_phase, estimate_recall
-from .screening import regex_screen, extract_window_evidence, extract_sentence_evidence, extract_all_evidence, format_evidence_display, calculate_semantic_scores
+from .screening import regex_screen, extract_window_evidence, extract_sentence_evidence, extract_all_evidence, format_evidence_display, calculate_semantic_scores, score_full_text, compare_screening_configs, generate_descriptions, confirm_descriptions
 from .sample import create_stratified_sample, save_sample_excel, apply_conditional_formatting, count_pattern_matches, highlight_pattern_matches
 
 __all__ = [
@@ -45,4 +45,6 @@ __all__ = [
     'format_evidence_display', 'calculate_semantic_scores',
     'create_stratified_sample', 'save_sample_excel', 'apply_conditional_formatting',
     'count_pattern_matches', 'highlight_pattern_matches',
+    'score_full_text', 'compare_screening_configs',
+    'generate_descriptions', 'confirm_descriptions',
 ]

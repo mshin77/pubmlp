@@ -126,10 +126,8 @@ def calculate_evaluation_metrics(true_labels, predictions, probabilities,
     }
 
 
-def calculate_wss_at_recall(true_labels, probabilities, target_recall=0.95):
-    """WSS@recall (Cohen et al., 2006): fraction of screening effort saved at target recall."""
-    true_array = np.asarray(true_labels)
-    probability_array = np.asarray(probabilities)
+def _wss_single(true_array, probability_array, target_recall):
+    """WSS@recall for a single 1D label vector."""
     n_total = len(true_array)
     n_relevant = true_array.sum()
     if n_relevant == 0:
@@ -148,9 +146,34 @@ def calculate_wss_at_recall(true_labels, probabilities, target_recall=0.95):
     }
 
 
+def calculate_wss_at_recall(true_labels, probabilities, target_recall=0.95):
+    """WSS@recall: fraction of screening effort saved at target recall.
+
+    For multi-label (2D) inputs, computes per-label WSS and returns the macro average.
+    """
+    true_array = np.asarray(true_labels)
+    probability_array = np.asarray(probabilities)
+
+    if true_array.ndim == 1:
+        return _wss_single(true_array, probability_array, target_recall)
+
+    results = [_wss_single(true_array[:, j], probability_array[:, j], target_recall)
+               for j in range(true_array.shape[1])]
+    return {k: float(np.nanmean([r[k] for r in results])) for k in results[0]}
+
+
 def calculate_ndcg(true_labels, probabilities):
-    """NDCG via sklearn.metrics.ndcg_score (Järvelin & Kekäläinen, 2002)."""
+    """Normalized discounted cumulative gain.
+
+    For multi-label (2D) inputs, computes per-label NDCG and returns the mean.
+    """
     from sklearn.metrics import ndcg_score
-    true_array = np.asarray(true_labels, dtype=float).reshape(1, -1)
-    probability_array = np.asarray(probabilities, dtype=float).reshape(1, -1)
-    return float(ndcg_score(true_array, probability_array))
+    true_array = np.asarray(true_labels, dtype=float)
+    probability_array = np.asarray(probabilities, dtype=float)
+
+    if true_array.ndim == 1:
+        return float(ndcg_score(true_array.reshape(1, -1), probability_array.reshape(1, -1)))
+
+    scores = [float(ndcg_score(true_array[:, j].reshape(1, -1), probability_array[:, j].reshape(1, -1)))
+              for j in range(true_array.shape[1])]
+    return float(np.mean(scores))

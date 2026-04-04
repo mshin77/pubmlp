@@ -19,9 +19,12 @@ class ALState:
 
 
 def rank_by_uncertainty(probabilities):
-    """Most uncertain (closest to 0.5) first."""
+    """Most uncertain (closest to 0.5) first. For multi-label, averages uncertainty across labels."""
     probability_array = np.asarray(probabilities)
-    return np.argsort(np.abs(probability_array - 0.5))
+    uncertainty = np.abs(probability_array - 0.5)
+    if uncertainty.ndim > 1:
+        uncertainty = uncertainty.mean(axis=1)
+    return np.argsort(uncertainty)
 
 
 def rank_by_random(n, seed=42):
@@ -32,8 +35,10 @@ def rank_by_random(n, seed=42):
 
 
 def rank_by_max_relevance(probabilities):
-    """Highest probability (most likely relevant) first."""
-    return np.argsort(-np.asarray(probabilities))
+    """Highest probability (most likely relevant) first. For multi-label, uses max across labels."""
+    probability_array = np.asarray(probabilities)
+    score = probability_array.max(axis=1) if probability_array.ndim > 1 else probability_array
+    return np.argsort(-score)
 
 
 def rank_by_hybrid_max_uncertainty(probabilities, exploit_ratio=0.95, seed=42):
@@ -74,8 +79,13 @@ def create_review_batch(df, indices, probabilities):
     """Subset df for human review with model probability and prediction."""
     probability_array = np.asarray(probabilities)
     batch = df.iloc[indices].copy()
-    batch['model_probability'] = probability_array[indices]
-    batch['model_prediction'] = (probability_array[indices] >= 0.5).astype(int)
+    probs_subset = probability_array[indices]
+    if probs_subset.ndim > 1:
+        batch['model_probability'] = probs_subset.max(axis=1)
+        batch['model_prediction'] = (probs_subset >= 0.5).astype(int).tolist()
+    else:
+        batch['model_probability'] = probs_subset
+        batch['model_prediction'] = (probs_subset >= 0.5).astype(int)
     return batch
 
 

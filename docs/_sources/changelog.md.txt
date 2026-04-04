@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 (2026-04-03)
+
+- Multi-label support for cross-validation, metrics, and active learning
+- Best fold selection by validation loss; fixed formatting and edge cases
+
 ## 0.3.0 (2026-04-03)
 
 - Human-in-the-loop description workflow: `generate_descriptions()`, `confirm_descriptions()`

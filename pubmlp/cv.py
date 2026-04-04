@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import torch
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, KFold
 from torch.utils.data import SequentialSampler, RandomSampler
 
 from .model import PubMLP
@@ -9,6 +9,12 @@ from .preprocess import preprocess_dataset, create_dataloader
 from .train import train_evaluate_model
 from .predict import get_predictions_and_labels
 from .metrics import calculate_evaluation_metrics
+
+try:
+    from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
+    _has_iterstrat = True
+except ImportError:
+    _has_iterstrat = False
 
 
 def cross_validate(data, tokenizer, device, column_specifications, numeric_transform, config,
@@ -36,19 +42,33 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
     """
     config.set_random_seeds()
     label_col = column_specifications['label_col']
-    # Stratification: composite key for multi-label, direct values for single
-    if isinstance(label_col, list):
+    is_multi = isinstance(label_col, list)
+
+    if is_multi and _has_iterstrat:
+        y_multi = data[label_col].values
+        skf = MultilabelStratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+        split_iter = skf.split(data, y_multi)
+    elif is_multi:
         strat_labels = data[label_col].astype(str).agg('_'.join, axis=1).values
+        try:
+            skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+            list(skf.split(data, strat_labels))
+            skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+            split_iter = skf.split(data, strat_labels)
+        except ValueError:
+            skf = KFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+            split_iter = skf.split(data)
     else:
         strat_labels = data[label_col].values
-    skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+        skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+        split_iter = skf.split(data, strat_labels)
 
     fold_metrics = []
-    best_fold_validation_accuracy = 0.0
+    best_fold_val_loss = float('inf')
     best_fold_index = 0
     best_model_state = None
 
-    for fold_index, (train_indices, validation_indices) in enumerate(skf.split(data, strat_labels)):
+    for fold_index, (train_indices, validation_indices) in enumerate(split_iter):
         print(f'\n{"="*60}')
         print(f'Fold {fold_index + 1}/{config.n_folds}')
         print(f'{"="*60}')
@@ -90,11 +110,10 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
         model.to(device)
 
         optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
-        criterion = torch.nn.BCEWithLogitsLoss()
 
         results = train_evaluate_model(
             model, train_loader, validation_loader, None,
-            optimizer, criterion, device, config.epochs,
+            optimizer, torch.nn.BCEWithLogitsLoss(), device, config.epochs,
             early_stopping_patience=config.early_stopping_patience,
             gradient_clip_norm=config.gradient_clip_norm,
             pos_weight=getattr(config, 'pos_weight', None),
@@ -124,8 +143,8 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
         })
         fold_metrics.append(metrics)
 
-        if best_epoch_accuracy > best_fold_validation_accuracy:
-            best_fold_validation_accuracy = best_epoch_accuracy
+        if best_val_loss < best_fold_val_loss:
+            best_fold_val_loss = best_val_loss
             best_fold_index = fold_index
             best_model_state = copy.deepcopy(fold_state)
 
@@ -138,8 +157,13 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
 
     # Aggregate across folds
     metric_keys = [k for k in fold_metrics[0] if isinstance(fold_metrics[0][k], (int, float, np.integer, np.floating)) and fold_metrics[0][k] is not None]
-    mean_metrics = {k: np.mean([fm[k] for fm in fold_metrics if fm.get(k) is not None]) for k in metric_keys}
-    std_metrics = {k: np.std([fm[k] for fm in fold_metrics if fm.get(k) is not None]) for k in metric_keys}
+    mean_metrics = {}
+    std_metrics = {}
+    for k in metric_keys:
+        vals = [fm[k] for fm in fold_metrics if fm.get(k) is not None]
+        if vals:
+            mean_metrics[k] = float(np.mean(vals))
+            std_metrics[k] = float(np.std(vals))
 
     print(f'\n{"="*60}')
     print(f'Cross-Validation Summary ({config.n_folds} folds)')
@@ -147,8 +171,9 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
     summary_keys = [k for k in ['accuracy', 'precision', 'recall', 'specificity', 'f1_score',
                                  'roc_auc', 'macro_f1', 'hamming_loss'] if k in mean_metrics]
     for k in summary_keys:
-        print(f'{k}: {mean_metrics[k]:.3f} +/- {std_metrics[k]:.3f}')
-    print(f'Best fold: {best_fold_index + 1} (validation accuracy: {best_fold_validation_accuracy:.3f}%)')
+        print(f'{k}: {mean_metrics[k]:.3f} \u00b1 {std_metrics[k]:.3f}')
+    best_acc = fold_metrics[best_fold_index].get('validation_accuracy', 0.0)
+    print(f'Best fold: {best_fold_index + 1} (validation accuracy: {best_acc:.3f}%)')
 
     return {
         'fold_metrics': fold_metrics,

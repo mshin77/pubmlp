@@ -54,7 +54,7 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
     Create a stratified random sample using iterative stratification.
 
     Stratifies on binary regex flags and semantic score levels per criterion
-    using Sechidis et al. (2011) iterative stratification via iterstrat.
+    using iterative stratification via iterstrat.
 
     Args:
         df: Input DataFrame with binary criterion columns and optional

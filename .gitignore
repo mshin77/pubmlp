@@ -37,5 +37,6 @@ Thumbs.db
 *.log
 
 .pytest_cache/
+tests/
 docs_src/
 docs/.doctrees/

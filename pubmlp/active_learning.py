@@ -157,3 +157,15 @@ def compare_reviewers(model_predictions, human_labels):
         'kappa': kappa,
         'disagreement_indices': disagreement_indices.tolist(),
     }
+
+
+def safe_stratified_split(X, y, test_size=0.2, random_state=42):
+    """Stratified train/val split with ShuffleSplit fallback for rare classes."""
+    from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
+    try:
+        sss = StratifiedShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+        train_idx, val_idx = next(sss.split(X, y))
+    except ValueError:
+        sss = ShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+        train_idx, val_idx = next(sss.split(X))
+    return train_idx, val_idx

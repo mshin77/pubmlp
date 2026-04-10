@@ -30,4 +30,4 @@ See [Quick Start](https://mshin77.github.io/pubmlp/getting-started.html) and [Sc
 
 ## Citation
 
-- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.3.2) [Computer software]. <https://github.com/mshin77/pubmlp>
+- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.3.3) [Computer software]. <https://github.com/mshin77/pubmlp>

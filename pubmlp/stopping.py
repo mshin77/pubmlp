@@ -85,6 +85,33 @@ def calculate_wss(total_records, total_screened, recall):
     return (total_records - total_screened) / total_records - (1 - recall)
 
 
+def recall_target_test(n_screened, n_relevant, N, target_recall=0.95, confidence=0.95):
+    """Hypergeometric stopping test for recall-based screening."""
+    from scipy.stats import hypergeom
+
+    alpha = 1 - confidence
+
+    if n_relevant == 0:
+        return {'stop': False, 'recall_lower_bound': 0.0, 'K_max': N - n_screened}
+
+    K_max = 0
+    for m in range(1, N - n_screened + 1):
+        R = n_relevant + m
+        if R > N:
+            break
+        p = hypergeom.cdf(n_relevant, N, R, n_screened)
+        if p < alpha:
+            break
+        K_max = m
+
+    recall_lb = n_relevant / (n_relevant + K_max) if (n_relevant + K_max) > 0 else 1.0
+    return {
+        'stop': recall_lb >= target_recall,
+        'recall_lower_bound': round(recall_lb, 6),
+        'K_max': K_max,
+    }
+
+
 def generate_stopping_report(state, total_records, config=None):
     """Report for human reviewer to decide whether to stop screening."""
     screened_pct = state.total_screened / total_records if total_records > 0 else 0

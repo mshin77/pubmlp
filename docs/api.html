@@ -399,6 +399,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#active-learning">Active Learning</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#safe-stratified-split"><code class="docutils literal notranslate"><span class="pre">safe_stratified_split</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#select-query-batch"><code class="docutils literal notranslate"><span class="pre">select_query_batch</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-review-batch"><code class="docutils literal notranslate"><span class="pre">create_review_batch</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-reviewers"><code class="docutils literal notranslate"><span class="pre">compare_reviewers</span></code></a></li>
@@ -410,6 +411,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stopping-rules">Stopping Rules</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#recall-target-test"><code class="docutils literal notranslate"><span class="pre">recall_target_test</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#should-stop"><code class="docutils literal notranslate"><span class="pre">should_stop</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-stopping-state"><code class="docutils literal notranslate"><span class="pre">update_stopping_state</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#estimate-recall"><code class="docutils literal notranslate"><span class="pre">estimate_recall</span></code></a></li>
@@ -975,6 +977,15 @@
 </section>
 <section id="active-learning">
 <h2>Active Learning<a class="headerlink" href="#active-learning" title="Link to this heading">#</a></h2>
+<section id="safe-stratified-split">
+<h3><code class="docutils literal notranslate"><span class="pre">safe_stratified_split</span></code><a class="headerlink" href="#safe-stratified-split" title="Link to this heading">#</a></h3>
+<p>Stratified train/val split with random fallback when rare classes prevent stratification.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pubmlp</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_stratified_split</span>
+
+<span class="n">train_idx</span><span class="p">,</span> <span class="n">val_idx</span> <span class="o">=</span> <span class="n">safe_stratified_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="select-query-batch">
 <h3><code class="docutils literal notranslate"><span class="pre">select_query_batch</span></code><a class="headerlink" href="#select-query-batch" title="Link to this heading">#</a></h3>
 <p>Select the most uncertain samples for human review.</p>
@@ -1010,6 +1021,10 @@
 </section>
 <section id="stopping-rules">
 <h2>Stopping Rules<a class="headerlink" href="#stopping-rules" title="Link to this heading">#</a></h2>
+<section id="recall-target-test">
+<h3><code class="docutils literal notranslate"><span class="pre">recall_target_test</span></code><a class="headerlink" href="#recall-target-test" title="Link to this heading">#</a></h3>
+<p>Statistical stopping test for recall-based screening. Returns stop decision, recall lower bound, and maximum missed relevant records.</p>
+</section>
 <section id="should-stop">
 <h3><code class="docutils literal notranslate"><span class="pre">should_stop</span></code><a class="headerlink" href="#should-stop" title="Link to this heading">#</a></h3>
 <p>Evaluate whether screening can stop based on SAFE criterion.</p>

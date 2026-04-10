@@ -292,6 +292,16 @@ Return up to 3 matched snippets with context for visual inspection.
 
 ## Active Learning
 
+#### `safe_stratified_split`
+
+Stratified train/val split with random fallback when rare classes prevent stratification.
+
+```python
+from pubmlp import safe_stratified_split
+
+train_idx, val_idx = safe_stratified_split(X, y, test_size=0.2, random_state=42)
+```
+
 #### `select_query_batch`
 
 Select the most uncertain samples for human review.
@@ -325,6 +335,10 @@ Offline AL simulation using ground truth labels; `model_fn(train_df, unlabeled_d
 95% max-relevance + 5% random ranking strategy.
 
 ## Stopping Rules
+
+#### `recall_target_test`
+
+Statistical stopping test for recall-based screening. Returns stop decision, recall lower bound, and maximum missed relevant records.
 
 #### `should_stop`
 

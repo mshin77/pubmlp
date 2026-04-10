@@ -5,7 +5,7 @@ Fuses transformer embeddings with tabular features through a multilayer
 perceptron (MLP) for human-in-the-loop screening workflows.
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 __author__ = "Mikyung Shin"
 __license__ = "MIT"
 
@@ -21,7 +21,7 @@ from .cv import cross_validate
 from .calibration import TemperatureScaling, collect_logits, calibrate_model
 from .audit import AuditTrail, AuditEntry, interpret_kappa, summarize_human_decisions, generate_prisma_report
 from .active_learning import ALState, select_query_batch, create_review_batch, compare_reviewers, merge_human_labels, simulate_al, rank_by_hybrid_max_uncertainty, rank_by_hybrid_max_random, safe_stratified_split
-from .stopping import StoppingState, should_stop, update_stopping_state, generate_stopping_report, calculate_wss, transition_phase, estimate_recall
+from .stopping import StoppingState, should_stop, update_stopping_state, generate_stopping_report, calculate_wss, transition_phase, estimate_recall, recall_target_test
 from .screening import regex_screen, extract_window_evidence, extract_sentence_evidence, extract_all_evidence, format_evidence_display, calculate_semantic_scores, score_full_text, compare_screening_configs, generate_descriptions, confirm_descriptions
 from .sample import create_stratified_sample, save_sample_excel, apply_conditional_formatting, count_pattern_matches, highlight_pattern_matches
 
@@ -40,7 +40,7 @@ __all__ = [
     'ALState', 'select_query_batch', 'create_review_batch', 'compare_reviewers', 'merge_human_labels',
     'simulate_al', 'rank_by_hybrid_max_uncertainty', 'rank_by_hybrid_max_random', 'safe_stratified_split',
     'StoppingState', 'should_stop', 'update_stopping_state', 'generate_stopping_report', 'calculate_wss',
-    'transition_phase', 'estimate_recall',
+    'transition_phase', 'estimate_recall', 'recall_target_test',
     'regex_screen', 'extract_window_evidence', 'extract_sentence_evidence', 'extract_all_evidence',
     'format_evidence_display', 'calculate_semantic_scores',
     'create_stratified_sample', 'save_sample_excel', 'apply_conditional_formatting',

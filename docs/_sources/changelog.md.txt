@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.3 (2026-04-10)
+
+- Added statistical stopping test for recall-based active learning screening
+
+## 0.3.2 (2026-04-07)
+
+- Added stratified split with fallback for rare classes in active learning
+
 ## 0.3.1 (2026-04-03)
 
 - Multi-label support for cross-validation, metrics, and active learning

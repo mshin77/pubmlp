@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pubmlp"
-version = "0.3.2"
+version = "0.3.3"
 description = "Multimodal publication classifier with LLM and deep learning"
 readme = "README.md"
 license = "MIT"
@@ -54,9 +54,6 @@ Issues = "https://github.com/mshin77/pubmlp/issues"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["pubmlp*"]
-
-[tool.setuptools.package-data]
-pubmlp = ["py.typed"]
 
 [tool.ruff]
 line-length = 100

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0 (2026-04-17)
+
+- Added cached-embedding fast path for active learning
+- Made training, prediction, and calibration reusable across tokenized and cached inputs
+
 ## 0.3.3 (2026-04-10)
 
 - Added statistical stopping test for recall-based active learning screening

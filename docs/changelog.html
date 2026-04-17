@@ -337,19 +337,20 @@
   </div>
   <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.3.3 (2026-04-10)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.3.2 (2026-04-07)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">0.3.1 (2026-04-03)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">0.3.0 (2026-04-03)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">0.2.8 (2026-03-31)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">0.2.7 (2026-03-19)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.6 (2026-03-19)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">0.2.5 (2026-03-19)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.3 (2026-03-19)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">0.2.2 (2026-03-18)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">0.2.1 (2026-03-17)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.0 (2026-03-15)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">0.1.0 (2026-03-01)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">0.4.0 (2026-04-17)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">0.3.3 (2026-04-10)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id3">0.3.2 (2026-04-07)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">0.3.1 (2026-04-03)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id5">0.3.0 (2026-04-03)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id6">0.2.8 (2026-03-31)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">0.2.7 (2026-03-19)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">0.2.6 (2026-03-19)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">0.2.5 (2026-03-19)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">0.2.3 (2026-03-19)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id11">0.2.2 (2026-03-18)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id12">0.2.1 (2026-03-17)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">0.2.0 (2026-03-15)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id14">0.1.0 (2026-03-01)</a></li>
 </ul>
   </nav></div>
     </div>
@@ -409,45 +410,52 @@
   <section id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading">#</a></h1>
 <section id="id1">
-<h2>0.3.3 (2026-04-10)<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<h2>0.4.0 (2026-04-17)<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Added cached-embedding fast path for active learning</p></li>
+<li><p>Made training, prediction, and calibration reusable across tokenized and cached inputs</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>0.3.3 (2026-04-10)<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Added statistical stopping test for recall-based active learning screening</p></li>
 </ul>
 </section>
-<section id="id2">
-<h2>0.3.2 (2026-04-07)<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<section id="id3">
+<h2>0.3.2 (2026-04-07)<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Added stratified split with fallback for rare classes in active learning</p></li>
 </ul>
 </section>
-<section id="id3">
-<h2>0.3.1 (2026-04-03)<a class="headerlink" href="#id3" title="Link to this heading">#</a></h2>
+<section id="id4">
+<h2>0.3.1 (2026-04-03)<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Multi-label support for cross-validation, metrics, and active learning</p></li>
 <li><p>Best fold selection by validation loss; fixed formatting and edge cases</p></li>
 </ul>
 </section>
-<section id="id4">
-<h2>0.3.0 (2026-04-03)<a class="headerlink" href="#id4" title="Link to this heading">#</a></h2>
+<section id="id5">
+<h2>0.3.0 (2026-04-03)<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Human-in-the-loop description workflow: <code class="docutils literal notranslate"><span class="pre">generate_descriptions()</span></code>, <code class="docutils literal notranslate"><span class="pre">confirm_descriptions()</span></code></p></li>
 <li><p>Full-text semantic scoring for all records: <code class="docutils literal notranslate"><span class="pre">score_full_text()</span></code>, <code class="docutils literal notranslate"><span class="pre">compare_screening_configs()</span></code></p></li>
 </ul>
 </section>
-<section id="id5">
-<h2>0.2.8 (2026-03-31)<a class="headerlink" href="#id5" title="Link to this heading">#</a></h2>
+<section id="id6">
+<h2>0.2.8 (2026-03-31)<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Suppressed safetensors load report during model initialization</p></li>
 </ul>
 </section>
-<section id="id6">
-<h2>0.2.7 (2026-03-19)<a class="headerlink" href="#id6" title="Link to this heading">#</a></h2>
+<section id="id7">
+<h2>0.2.7 (2026-03-19)<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Updated version references across all files</p></li>
 </ul>
 </section>
-<section id="id7">
-<h2>0.2.6 (2026-03-19)<a class="headerlink" href="#id7" title="Link to this heading">#</a></h2>
+<section id="id8">
+<h2>0.2.6 (2026-03-19)<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Fixed 0.0 returns where NaN is correct (screening, stopping, metrics, active learning)</p></li>
 <li><p>Added bounds check in WSS calculation and cross-validation</p></li>
@@ -455,43 +463,43 @@
 <li><p>Narrowed exception handling in sample and screening modules</p></li>
 </ul>
 </section>
-<section id="id8">
-<h2>0.2.5 (2026-03-19)<a class="headerlink" href="#id8" title="Link to this heading">#</a></h2>
+<section id="id9">
+<h2>0.2.5 (2026-03-19)<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Multi-label iterative stratification for seed sampling</p></li>
 <li><p>Improved active learning progress plot</p></li>
 </ul>
 </section>
-<section id="id9">
-<h2>0.2.3 (2026-03-19)<a class="headerlink" href="#id9" title="Link to this heading">#</a></h2>
+<section id="id10">
+<h2>0.2.3 (2026-03-19)<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Standardized variable names and print messages</p></li>
 <li><p>Added active learning progress plot and persistent data splits</p></li>
 <li><p>Added changelog page</p></li>
 </ul>
 </section>
-<section id="id10">
-<h2>0.2.2 (2026-03-18)<a class="headerlink" href="#id10" title="Link to this heading">#</a></h2>
+<section id="id11">
+<h2>0.2.2 (2026-03-18)<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Device fallback and warning fixes</p></li>
 <li><p>Bounds validation in active learning simulation</p></li>
 </ul>
 </section>
-<section id="id11">
-<h2>0.2.1 (2026-03-17)<a class="headerlink" href="#id11" title="Link to this heading">#</a></h2>
+<section id="id12">
+<h2>0.2.1 (2026-03-17)<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Pattern match highlighting and conditional formatting for Excel</p></li>
 </ul>
 </section>
-<section id="id12">
-<h2>0.2.0 (2026-03-15)<a class="headerlink" href="#id12" title="Link to this heading">#</a></h2>
+<section id="id13">
+<h2>0.2.0 (2026-03-15)<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Multi-label classification, active learning, SAFE stopping, audit trails</p></li>
 <li><p>Calibration, cross-validation, regex screening, stratified sampling</p></li>
 </ul>
 </section>
-<section id="id13">
-<h2>0.1.0 (2026-03-01)<a class="headerlink" href="#id13" title="Link to this heading">#</a></h2>
+<section id="id14">
+<h2>0.1.0 (2026-03-01)<a class="headerlink" href="#id14" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Initial release with PubMLP model and 6 embedding backends</p></li>
 </ul>

@@ -3,31 +3,36 @@ import torch
 from transformers import get_linear_schedule_with_warmup
 from tqdm import tqdm
 
-from .utils import unpack_batch
+from .utils import default_forward_fn
 
 
-def calculate_loss(model, dataloader, criterion, device):
+def calculate_loss(model, dataloader, criterion, device, forward_fn=None):
     """Average loss across all batches."""
+    if forward_fn is None:
+        forward_fn = default_forward_fn
     model.eval()
     total_loss, n_samples = 0.0, 0
     with torch.no_grad():
         for batch in dataloader:
-            input_ids, attention_mask, categorical_tensor, numeric_tensor, labels, texts = unpack_batch(batch, device)
-            outputs = model(input_ids, attention_mask, categorical_tensor, numeric_tensor, texts)
+            labels = batch['labels'].to(device)
+            outputs = forward_fn(model, batch, device)
             loss = criterion(outputs, labels)
-            total_loss += loss.item() * input_ids.size(0)
-            n_samples += input_ids.size(0)
+            batch_n = labels.size(0)
+            total_loss += loss.item() * batch_n
+            n_samples += batch_n
     return total_loss / n_samples
 
 
-def calculate_accuracy(model, dataloader, device):
+def calculate_accuracy(model, dataloader, device, forward_fn=None):
     """Accuracy (%) across all batches. Multi-label: average per-label accuracy."""
+    if forward_fn is None:
+        forward_fn = default_forward_fn
     model.eval()
     correct, total_elements = 0, 0
     with torch.no_grad():
         for batch in dataloader:
-            input_ids, attention_mask, categorical_tensor, numeric_tensor, labels, texts = unpack_batch(batch, device)
-            outputs = model(input_ids, attention_mask, categorical_tensor, numeric_tensor, texts)
+            labels = batch['labels'].to(device)
+            outputs = forward_fn(model, batch, device)
             predictions = (torch.sigmoid(outputs) > 0.5).float()
             correct += (predictions == labels).sum().item()
             total_elements += labels.numel()
@@ -49,7 +54,7 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
                          optimizer, criterion, device, epochs, scheduler=None,
                          early_stopping_patience=3, use_best_model=True,
                          gradient_clip_norm=1.0, use_warmup=True, pos_weight='auto',
-                         warmup_steps=0):
+                         warmup_steps=0, forward_fn=None):
     """
     Train model with early stopping, evaluate on test set.
 
@@ -58,6 +63,7 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
                     or pass a tensor directly.
         warmup_steps: Number of warmup steps for linear schedule. 0 = no warmup.
         test_dataloader: Optional. If None, test evaluation is skipped.
+        forward_fn: Forward override; pass ``cached_forward_fn`` for cached-embedding batches.
 
     Returns:
         tuple: (train_losses, validation_losses, train_accuracies,
@@ -66,6 +72,9 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
     """
     start_time = time.time()
     model.to(device)
+
+    if forward_fn is None:
+        forward_fn = default_forward_fn
 
     # Handle pos_weight for BCEWithLogitsLoss
     if pos_weight == 'auto':
@@ -91,9 +100,8 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
 
         progress_bar = tqdm(train_dataloader, desc=f'Epoch {epoch+1}/{epochs}')
         for batch in progress_bar:
-            input_ids, attention_mask, categorical_tensor, numeric_tensor, labels, texts = unpack_batch(batch, device)
-
-            outputs = model(input_ids, attention_mask, categorical_tensor, numeric_tensor, texts)
+            labels = batch['labels'].to(device)
+            outputs = forward_fn(model, batch, device)
             loss = criterion(outputs, labels)
 
             optimizer.zero_grad()
@@ -104,20 +112,21 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
             if scheduler is not None and not isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 scheduler.step()
 
-            total_loss += loss.item() * input_ids.size(0)
-            n_samples += input_ids.size(0)
+            batch_n = labels.size(0)
+            total_loss += loss.item() * batch_n
+            n_samples += batch_n
             progress_bar.set_postfix({'loss': total_loss / n_samples})
 
         train_loss = total_loss / n_samples
         train_losses.append(train_loss)
 
-        validation_loss = calculate_loss(model, validation_dataloader, criterion, device)
+        validation_loss = calculate_loss(model, validation_dataloader, criterion, device, forward_fn=forward_fn)
         validation_losses.append(validation_loss)
 
-        train_accuracy = calculate_accuracy(model, train_dataloader, device)
+        train_accuracy = calculate_accuracy(model, train_dataloader, device, forward_fn=forward_fn)
         train_accuracies.append(train_accuracy)
 
-        validation_accuracy = calculate_accuracy(model, validation_dataloader, device)
+        validation_accuracy = calculate_accuracy(model, validation_dataloader, device, forward_fn=forward_fn)
         validation_accuracies.append(validation_accuracy)
 
         improved = validation_loss < best_val_loss
@@ -145,7 +154,7 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
         model.load_state_dict(best_model_state)
 
     if test_dataloader is not None:
-        test_accuracy = calculate_accuracy(model, test_dataloader, device)
+        test_accuracy = calculate_accuracy(model, test_dataloader, device, forward_fn=forward_fn)
         print(f'Test Accuracy: {test_accuracy:.3f}% | Best epoch {best_epoch} (validation loss: {best_val_loss:.3f})')
     else:
         test_accuracy = None

@@ -1,20 +1,22 @@
 import torch
 from tqdm import tqdm
 
-from .utils import unpack_batch
+from .utils import default_forward_fn
 
 
 def _run_inference(model, dataloader, device, threshold=0.5, calibration=None,
-                   collect_labels=False, desc="Predicting"):
+                   collect_labels=False, desc="Predicting", forward_fn=None):
     """Shared inference loop for prediction functions."""
+    if forward_fn is None:
+        forward_fn = default_forward_fn
     model.eval()
     threshold_tensor = torch.tensor(threshold) if not isinstance(threshold, torch.Tensor) else threshold
     all_predictions, all_probabilities, all_labels = [], [], []
 
     with torch.no_grad():
         for batch in tqdm(dataloader, desc=desc):
-            input_ids, attention_mask, categorical_tensor, numeric_tensor, labels, texts = unpack_batch(batch, device)
-            outputs = model(input_ids, attention_mask, categorical_tensor, numeric_tensor, texts)
+            outputs = forward_fn(model, batch, device)
+            labels = batch['labels'].to(device) if collect_labels else None
             if calibration is not None:
                 outputs = calibration.transform(outputs)
             probabilities = torch.sigmoid(outputs)
@@ -35,7 +37,7 @@ def _run_inference(model, dataloader, device, threshold=0.5, calibration=None,
 
 
 def predict_model(model, unlabeled_dataloader, device, return_probs=True,
-                   threshold=0.5, calibration=None):
+                   threshold=0.5, calibration=None, forward_fn=None):
     """
     Predict labels for unlabeled data.
 
@@ -45,29 +47,32 @@ def predict_model(model, unlabeled_dataloader, device, return_probs=True,
     Args:
         threshold: Decision threshold (float or list of floats for per-label).
         calibration: Optional TemperatureScaling object applied to logits before sigmoid.
+        forward_fn: Forward override; pass ``cached_forward_fn`` for cached-embedding batches.
 
     Returns:
         tuple or list: (predictions, probabilities) if return_probs else predictions only.
     """
     predictions, probabilities, _ = _run_inference(model, unlabeled_dataloader, device,
-                                                    threshold, calibration, desc="Predicting")
+                                                    threshold, calibration, desc="Predicting",
+                                                    forward_fn=forward_fn)
     return (predictions, probabilities) if return_probs else predictions
 
 
 def get_predictions_and_labels(model, dataloader, device, threshold=0.5,
-                                calibration=None):
+                                calibration=None, forward_fn=None):
     """
     Get predictions, probabilities, and true labels from a labeled dataloader.
 
     Args:
         threshold: Decision threshold (float or list of floats for per-label).
         calibration: Optional TemperatureScaling object applied to logits before sigmoid.
+        forward_fn: Forward override; pass ``cached_forward_fn`` for cached-embedding batches.
 
     Returns:
         tuple: (predictions, probabilities, true_labels)
     """
     return _run_inference(model, dataloader, device, threshold, calibration,
-                          collect_labels=True, desc="Evaluating")
+                          collect_labels=True, desc="Evaluating", forward_fn=forward_fn)
 
 
 def flag_uncertain(probabilities, low=0.3, high=0.7):

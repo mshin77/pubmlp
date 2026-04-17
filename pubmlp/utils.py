@@ -28,7 +28,7 @@ def auto_batch_size(device):
 
 
 def unpack_batch(batch, device):
-    """Move batch tensors to device and return unpacked components."""
+    """Unpack tokenized batch to device."""
     return (
         batch['input_ids'].to(device),
         batch['attention_mask'].to(device),
@@ -36,6 +36,21 @@ def unpack_batch(batch, device):
         batch['numeric_tensor'].to(device),
         batch['labels'].to(device),
         batch.get('texts', None),
+    )
+
+
+def default_forward_fn(model, batch, device):
+    """Tokenized forward through encoder + head."""
+    input_ids, attention_mask, categorical_tensor, numeric_tensor, _, texts = unpack_batch(batch, device)
+    return model(input_ids, attention_mask, categorical_tensor, numeric_tensor, texts)
+
+
+def cached_forward_fn(model, batch, device):
+    """Cached-embedding forward through head only."""
+    return model.forward_from_embedding(
+        batch['sentence_embedding'].to(device),
+        batch['categorical_tensor'].to(device),
+        batch['numeric_tensor'].to(device),
     )
 
 

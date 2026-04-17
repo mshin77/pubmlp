@@ -76,28 +76,22 @@ class PubMLP(nn.Module):
         mask_expanded = attention_mask.unsqueeze(-1).expand(last_hidden_state.size()).float()
         return (last_hidden_state * mask_expanded).sum(1) / mask_expanded.sum(1).clamp(min=1e-9)
 
-    def forward(self, input_ids, attention_mask, categorical_tensor=None, numeric_tensor=None, texts=None):
+    def _encode(self, input_ids, attention_mask, texts=None):
+        """Run encoder + pooling. Caller handles device placement for sentence-transformer."""
         if self._use_sentence_transformer:
             if texts is None:
                 raise ValueError("texts must be provided when using sentence-transformer")
             with torch.no_grad():
-                sentence_embedding = self.encoder.encode(texts, convert_to_tensor=True, show_progress_bar=False)
-                if categorical_tensor is not None and categorical_tensor.numel() > 0:
-                    sentence_embedding = sentence_embedding.to(categorical_tensor.device)
-                elif numeric_tensor is not None and numeric_tensor.numel() > 0:
-                    sentence_embedding = sentence_embedding.to(numeric_tensor.device)
-                else:
-                    sentence_embedding = sentence_embedding.to(input_ids.device)
-        else:
-            outputs = self.encoder(input_ids, attention_mask)
-            if self.pooling_strategy == 'pooler' and hasattr(outputs, 'pooler_output') and outputs.pooler_output is not None:
-                sentence_embedding = outputs.pooler_output
-            else:
-                sentence_embedding = self._mean_pooling(outputs.last_hidden_state, attention_mask)
+                return self.encoder.encode(texts, convert_to_tensor=True, show_progress_bar=False)
+        outputs = self.encoder(input_ids, attention_mask)
+        if self.pooling_strategy == 'pooler' and hasattr(outputs, 'pooler_output') and outputs.pooler_output is not None:
+            return outputs.pooler_output
+        return self._mean_pooling(outputs.last_hidden_state, attention_mask)
 
+    def _head_forward(self, sentence_embedding, categorical_tensor=None, numeric_tensor=None):
+        """Concat sentence + categorical + numeric features and run the classifier head."""
         features_concat = [sentence_embedding]
 
-        # Learned categorical embeddings
         if self.categorical_vocab_sizes and categorical_tensor is not None and categorical_tensor.numel() > 0:
             for i, emb_layer in enumerate(self.cat_embeddings):
                 features_concat.append(emb_layer(categorical_tensor[:, i]))
@@ -109,3 +103,18 @@ class PubMLP(nn.Module):
 
         concat_features = torch.cat(features_concat, dim=1)
         return self.classifier(self.dropout(concat_features))
+
+    def forward(self, input_ids, attention_mask, categorical_tensor=None, numeric_tensor=None, texts=None):
+        sentence_embedding = self._encode(input_ids, attention_mask, texts=texts)
+        if self._use_sentence_transformer:
+            if categorical_tensor is not None and categorical_tensor.numel() > 0:
+                sentence_embedding = sentence_embedding.to(categorical_tensor.device)
+            elif numeric_tensor is not None and numeric_tensor.numel() > 0:
+                sentence_embedding = sentence_embedding.to(numeric_tensor.device)
+            else:
+                sentence_embedding = sentence_embedding.to(input_ids.device)
+        return self._head_forward(sentence_embedding, categorical_tensor, numeric_tensor)
+
+    def forward_from_embedding(self, sentence_embedding, categorical_tensor=None, numeric_tensor=None):
+        """Classifier head forward from a precomputed embedding (cached-embedding fast path)."""
+        return self._head_forward(sentence_embedding, categorical_tensor, numeric_tensor)

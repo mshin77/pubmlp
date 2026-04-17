@@ -2,17 +2,19 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from .utils import unpack_batch
+from .utils import default_forward_fn
 
 
-def collect_logits(model, dataloader, device):
+def collect_logits(model, dataloader, device, forward_fn=None):
     """Run model in eval mode and collect raw logits + labels."""
+    if forward_fn is None:
+        forward_fn = default_forward_fn
     model.eval()
     all_logits, all_labels = [], []
     with torch.no_grad():
         for batch in dataloader:
-            input_ids, attention_mask, categorical_tensor, numeric_tensor, labels, texts = unpack_batch(batch, device)
-            logits = model(input_ids, attention_mask, categorical_tensor, numeric_tensor, texts)
+            labels = batch['labels'].to(device)
+            logits = forward_fn(model, batch, device)
             all_logits.append(logits)
             all_labels.append(labels)
     return torch.cat(all_logits), torch.cat(all_labels)
@@ -80,9 +82,9 @@ class TemperatureScaling:
         return obj
 
 
-def calibrate_model(model, dataloader, device):
-    """Collect logits and fit temperature scaling."""
-    logits, labels = collect_logits(model, dataloader, device)
+def calibrate_model(model, dataloader, device, forward_fn=None):
+    """Collect logits and fit temperature scaling. Pass ``cached_forward_fn`` for cached batches."""
+    logits, labels = collect_logits(model, dataloader, device, forward_fn=forward_fn)
     scaler = TemperatureScaling()
     scaler.fit(logits, labels)
     return scaler

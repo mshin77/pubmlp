@@ -160,6 +160,27 @@ class CustomDataset(Dataset):
         return len(self.input_ids)
 
 
+class CachedEmbeddingDataset(Dataset):
+    """Dataset of precomputed sentence embeddings + tabular features (cached-embedding fast path)."""
+
+    def __init__(self, sentence_embedding, labels, categorical_tensor=None, numeric_tensor=None):
+        self.sentence_embedding = sentence_embedding
+        self.labels = labels
+        self.categorical_tensor = categorical_tensor if categorical_tensor is not None else torch.tensor([], dtype=torch.long)
+        self.numeric_tensor = numeric_tensor if numeric_tensor is not None else torch.tensor([], dtype=torch.float)
+
+    def __getitem__(self, index):
+        return {
+            'sentence_embedding': self.sentence_embedding[index],
+            'labels': self.labels[index],
+            'categorical_tensor': self.categorical_tensor[index] if self.categorical_tensor.numel() > 0 else self.categorical_tensor,
+            'numeric_tensor': self.numeric_tensor[index] if self.numeric_tensor.numel() > 0 else self.numeric_tensor,
+        }
+
+    def __len__(self):
+        return len(self.sentence_embedding)
+
+
 def _build_categorical_vocab(series, rare_threshold=5):
     """Build value->index mapping. Index 0=<UNK>, 1=<RARE>, 2+=actual values."""
     counts = series.value_counts()
@@ -319,17 +340,20 @@ def preprocess_dataset(data, tokenizer, device, column_specifications, numeric_t
 
 
 def collate_fn(batch):
-    """Custom collate to handle text lists in batches."""
+    """Custom collate handling both tokenized and cached-embedding batches."""
     result = {
-        'input_ids': torch.stack([item['input_ids'] for item in batch]),
-        'attention_mask': torch.stack([item['attention_mask'] for item in batch]),
         'labels': torch.stack([item['labels'] for item in batch]),
         'categorical_tensor': torch.stack([item['categorical_tensor'] for item in batch]),
         'numeric_tensor': torch.stack([item['numeric_tensor'] for item in batch]),
-        'texts': None,
     }
-    if 'texts' in batch[0] and batch[0]['texts'] is not None:
-        result['texts'] = [item['texts'] for item in batch]
+    if 'sentence_embedding' in batch[0]:
+        result['sentence_embedding'] = torch.stack([item['sentence_embedding'] for item in batch])
+    else:
+        result['input_ids'] = torch.stack([item['input_ids'] for item in batch])
+        result['attention_mask'] = torch.stack([item['attention_mask'] for item in batch])
+        result['texts'] = None
+        if 'texts' in batch[0] and batch[0]['texts'] is not None:
+            result['texts'] = [item['texts'] for item in batch]
     return result
 
 

@@ -1,12 +1,12 @@
-import logging
-import sys
-import io
 import torch
 import torch.nn as nn
+import transformers
 from transformers import AutoModel
 from sentence_transformers import SentenceTransformer
 
 from .config import sentence_transformer_models
+
+transformers.logging.set_verbosity_error()
 
 
 class PubMLP(nn.Module):
@@ -31,7 +31,6 @@ class PubMLP(nn.Module):
             self.cat_embeddings.append(nn.Embedding(vocab_size, embed_dim))
             cat_embed_total += embed_dim
 
-        # Backward compat: if no vocab sizes given, fall back to scalar categorical input
         self.categorical_cols_num = categorical_cols_num if not self.categorical_vocab_sizes else 0
         if self._use_sentence_transformer:
             self.model_name = model_name or 'all-MiniLM-L6-v2'
@@ -42,14 +41,7 @@ class PubMLP(nn.Module):
             embedding_size = self.encoder.get_sentence_embedding_dimension()
         else:
             self.model_name = model_name or 'bert-base-uncased'
-            _logger = logging.getLogger("transformers")
-            _prev_level = _logger.level
-            _logger.setLevel(logging.ERROR)
-            _old_stdout = sys.stdout
-            sys.stdout = io.StringIO()
             self.encoder = AutoModel.from_pretrained(self.model_name)
-            sys.stdout = _old_stdout
-            _logger.setLevel(_prev_level)
             embedding_size = self.encoder.config.hidden_size
 
             if self.pooling_strategy == 'auto':

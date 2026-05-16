@@ -16,7 +16,7 @@ pip install pubmlp[screening]  # screening tools (openpyxl, nltk)
 
 ## Citation
 
-- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.4.0) \[Computer software\]. <a href="https://github.com/mshin77/pubmlp">https://github.com/mshin77/pubmlp</a>
+- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.4.1) \[Computer software\]. <a href="https://github.com/mshin77/pubmlp">https://github.com/mshin77/pubmlp</a>
 
 ## Reference
 

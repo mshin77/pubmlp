@@ -40,8 +40,8 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -351,6 +351,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#split-data"><code class="docutils literal notranslate"><span class="pre">split_data</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fittedtransforms"><code class="docutils literal notranslate"><span class="pre">FittedTransforms</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#customdataset"><code class="docutils literal notranslate"><span class="pre">CustomDataset</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cachedembeddingdataset"><code class="docutils literal notranslate"><span class="pre">CachedEmbeddingDataset</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-dataloader"><code class="docutils literal notranslate"><span class="pre">create_dataloader</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collate-fn"><code class="docutils literal notranslate"><span class="pre">collate_fn</span></code></a></li>
 </ul>
@@ -369,6 +370,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-ndcg"><code class="docutils literal notranslate"><span class="pre">calculate_ndcg</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-validate"><code class="docutils literal notranslate"><span class="pre">cross_validate</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results"><code class="docutils literal notranslate"><span class="pre">plot_results</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-al-progress"><code class="docutils literal notranslate"><span class="pre">plot_al_progress</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temperaturescaling"><code class="docutils literal notranslate"><span class="pre">TemperatureScaling</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calibrate-model"><code class="docutils literal notranslate"><span class="pre">calibrate_model</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#collect-logits"><code class="docutils literal notranslate"><span class="pre">collect_logits</span></code></a></li>
@@ -433,6 +435,9 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#get-device"><code class="docutils literal notranslate"><span class="pre">get_device</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-batch-size"><code class="docutils literal notranslate"><span class="pre">auto_batch_size</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#unpack-batch"><code class="docutils literal notranslate"><span class="pre">unpack_batch</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#default-forward-fn"><code class="docutils literal notranslate"><span class="pre">default_forward_fn</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cached-forward-fn"><code class="docutils literal notranslate"><span class="pre">cached_forward_fn</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compute-cls-embeddings"><code class="docutils literal notranslate"><span class="pre">compute_cls_embeddings</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -779,6 +784,10 @@
 <h3><code class="docutils literal notranslate"><span class="pre">CustomDataset</span></code><a class="headerlink" href="#customdataset" title="Link to this heading">#</a></h3>
 <p>Dataset holding tokenized text, categorical/numeric features, and labels.</p>
 </section>
+<section id="cachedembeddingdataset">
+<h3><code class="docutils literal notranslate"><span class="pre">CachedEmbeddingDataset</span></code><a class="headerlink" href="#cachedembeddingdataset" title="Link to this heading">#</a></h3>
+<p>Dataset of precomputed sentence embeddings + tabular features (cached-embedding fast path).</p>
+</section>
 <section id="create-dataloader">
 <h3><code class="docutils literal notranslate"><span class="pre">create_dataloader</span></code><a class="headerlink" href="#create-dataloader" title="Link to this heading">#</a></h3>
 <p>Create DataLoader with custom collate function.</p>
@@ -848,6 +857,10 @@
 <section id="plot-results">
 <h3><code class="docutils literal notranslate"><span class="pre">plot_results</span></code><a class="headerlink" href="#plot-results" title="Link to this heading">#</a></h3>
 <p>Plot training/validation loss and accuracy curves.</p>
+</section>
+<section id="plot-al-progress">
+<h3><code class="docutils literal notranslate"><span class="pre">plot_al_progress</span></code><a class="headerlink" href="#plot-al-progress" title="Link to this heading">#</a></h3>
+<p>Plot active learning learning curve (Macro F1 vs labeled instances), with optional per-criterion overlays.</p>
 </section>
 <section id="temperaturescaling">
 <h3><code class="docutils literal notranslate"><span class="pre">TemperatureScaling</span></code><a class="headerlink" href="#temperaturescaling" title="Link to this heading">#</a></h3>
@@ -1090,6 +1103,18 @@
 <section id="unpack-batch">
 <h3><code class="docutils literal notranslate"><span class="pre">unpack_batch</span></code><a class="headerlink" href="#unpack-batch" title="Link to this heading">#</a></h3>
 <p>Move batch tensors to device and return unpacked components.</p>
+</section>
+<section id="default-forward-fn">
+<h3><code class="docutils literal notranslate"><span class="pre">default_forward_fn</span></code><a class="headerlink" href="#default-forward-fn" title="Link to this heading">#</a></h3>
+<p>Tokenized forward through encoder + classifier head.</p>
+</section>
+<section id="cached-forward-fn">
+<h3><code class="docutils literal notranslate"><span class="pre">cached_forward_fn</span></code><a class="headerlink" href="#cached-forward-fn" title="Link to this heading">#</a></h3>
+<p>Cached-embedding forward through head only (skips encoder).</p>
+</section>
+<section id="compute-cls-embeddings">
+<h3><code class="docutils literal notranslate"><span class="pre">compute_cls_embeddings</span></code><a class="headerlink" href="#compute-cls-embeddings" title="Link to this heading">#</a></h3>
+<p>Run the encoder once over a dataloader; returns <code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">hidden_size)</span></code> CPU tensor for the cached-embedding fast path.</p>
 </section>
 </section>
 </section>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 (2026-05-16)
+
+- Refactored numeric preprocessing into dispatch tables to remove if/elif chains
+- Silenced transformers logger once at module import instead of per-instance stdout redirection
+- Removed defensive try/except in regex sample helpers; invalid patterns now fail loudly
+- Added `test` optional dependency group
+
 ## 0.4.0 (2026-04-17)
 
 - Added cached-embedding fast path for active learning

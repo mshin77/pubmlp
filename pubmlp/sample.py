@@ -19,29 +19,22 @@ def count_pattern_matches(text, pattern):
     """Count regex matches in text (case-insensitive)."""
     if pd.isna(text) or not str(text).strip():
         return 0
-    try:
-        return len(re.findall(pattern, str(text), re.IGNORECASE))
-    except (re.error, TypeError):
-        return 0
+    return len(re.findall(pattern, str(text), re.IGNORECASE))
 
 
 def highlight_pattern_matches(text, pattern, max_length=200):
     """Return up to 3 matched snippets with context for visual inspection."""
     if pd.isna(text) or not str(text).strip():
         return ''
-    try:
-        matches = list(re.finditer(pattern, str(text), re.IGNORECASE))
-        if not matches:
-            return ''
-        snippets = []
-        for match in matches[:3]:
-            start = max(0, match.start() - 20)
-            end = min(len(text), match.end() + 20)
-            snippets.append(f"...{text[start:end].strip()}...")
-        result = ' | '.join(snippets)
-        return result[:max_length] if len(result) > max_length else result
-    except (re.error, TypeError):
+    matches = list(re.finditer(pattern, str(text), re.IGNORECASE))
+    if not matches:
         return ''
+    snippets = [
+        f"...{text[max(0, m.start() - 20):min(len(text), m.end() + 20)].strip()}..."
+        for m in matches[:3]
+    ]
+    result = ' | '.join(snippets)
+    return result[:max_length] if len(result) > max_length else result
 
 
 def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
@@ -90,8 +83,7 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
 
     # Add pattern count and snippet columns
     for label, pattern in patterns.items():
-        df[f'{label}_pattern_count'] = df['_combined_text'].apply(
-            lambda x, p=pattern: count_pattern_matches(x, p))
+        df[f'{label}_pattern_count'] = df['_combined_text'].str.count(pattern, flags=re.IGNORECASE)
         df[f'{label}_pattern_snippets'] = df['_combined_text'].apply(
             lambda x, p=pattern: highlight_pattern_matches(x, p))
 
@@ -195,12 +187,9 @@ def apply_conditional_formatting(excel_file, patterns: Dict[str, str]):
             col_letter = get_column_letter(header_row[count_col])
             for row in range(2, ws.max_row + 1):
                 cell = ws[f'{col_letter}{row}']
-                try:
-                    if cell.value and int(cell.value) > 0:
-                        cell.fill = yellow_fill
-                        cell.font = bold_font
-                except (ValueError, TypeError):
-                    pass
+                if isinstance(cell.value, (int, float)) and cell.value > 0:
+                    cell.fill = yellow_fill
+                    cell.font = bold_font
 
     # Column widths
     width_hints = {'title': 50, 'abstract': 80, 'keywords': 40, 'notes': 40}

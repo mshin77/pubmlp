@@ -76,7 +76,6 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
     if forward_fn is None:
         forward_fn = default_forward_fn
 
-    # Handle pos_weight for BCEWithLogitsLoss
     if pos_weight == 'auto':
         computed_pos_weight = calculate_pos_weight(train_dataloader, device)
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=computed_pos_weight)

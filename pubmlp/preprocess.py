@@ -59,6 +59,68 @@ def split_data(data, random_state=42, test_pct=0.10, validation_pct=0.10,
     return training_df.copy(), validation_df.copy(), test_df.copy()
 
 
+def _serialize_qt(qt):
+    return {
+        'n_quantiles': qt.n_quantiles,
+        'output_distribution': qt.output_distribution,
+        'references_': qt.references_.tolist(),
+        'quantiles_': qt.quantiles_.tolist(),
+    }
+
+
+def _deserialize_qt(qt_params):
+    qt = QuantileTransformer(
+        n_quantiles=qt_params['n_quantiles'],
+        output_distribution=qt_params['output_distribution'],
+        random_state=0,
+    )
+    qt.references_ = np.array(qt_params['references_'])
+    qt.quantiles_ = np.array(qt_params['quantiles_'])
+    qt.n_features_in_ = 1
+    return qt
+
+
+_numeric_serialize_spec = {
+    'min': (lambda p: {'min_val': float(p['min_val'])},
+            lambda e: {'min_val': e['min_val']}),
+    'max': (lambda p: {'max_val': float(p['max_val'])},
+            lambda e: {'max_val': e['max_val']}),
+    'mean': (lambda p: {'mean_val': float(p['mean_val'])},
+             lambda e: {'mean_val': e['mean_val']}),
+    'quantile': (lambda p: {'qt_params': _serialize_qt(p['qt'])},
+                 lambda e: {'qt': _deserialize_qt(e['qt_params'])}),
+    'log1p': (lambda p: {'qt_params': _serialize_qt(p['qt'])},
+              lambda e: {'qt': _deserialize_qt(e['qt_params'])}),
+    'robust': (lambda p: {'center': float(p['scaler'].center_[0]),
+                          'scale': float(p['scaler'].scale_[0])},
+               lambda e: {'scaler': _restore_robust(e['center'], e['scale'])}),
+}
+
+
+def _restore_robust(center, scale):
+    scaler = RobustScaler()
+    scaler.center_ = np.array([center])
+    scaler.scale_ = np.array([scale])
+    scaler.n_features_in_ = 1
+    return scaler
+
+
+def _serialize_numeric(params):
+    entry = {'transform': params['transform']}
+    if 'median' in params:
+        entry['median'] = float(params['median'])
+    entry.update(_numeric_serialize_spec[params['transform']][0](params))
+    return entry
+
+
+def _deserialize_numeric(entry):
+    params = {'transform': entry['transform']}
+    if 'median' in entry:
+        params['median'] = entry['median']
+    params.update(_numeric_serialize_spec[entry['transform']][1](entry))
+    return params
+
+
 @dataclass
 class FittedTransforms:
     """Stores fitted parameters from training data for reuse on validation/test."""
@@ -70,65 +132,16 @@ class FittedTransforms:
         return [len(vocab) for vocab in self.categorical_vocabs.values()]
 
     def to_dict(self):
-        numeric_serialized = {}
-        for col, params in self.numeric_params.items():
-            entry = {'transform': params['transform']}
-            if 'median' in params:
-                entry['median'] = float(params['median'])
-            if params['transform'] == 'min':
-                entry['min_val'] = float(params['min_val'])
-            elif params['transform'] == 'max':
-                entry['max_val'] = float(params['max_val'])
-            elif params['transform'] == 'mean':
-                entry['mean_val'] = float(params['mean_val'])
-            elif params['transform'] in ('quantile', 'log1p'):
-                entry['qt_params'] = {
-                    'n_quantiles': params['qt'].n_quantiles,
-                    'output_distribution': params['qt'].output_distribution,
-                    'references_': params['qt'].references_.tolist(),
-                    'quantiles_': params['qt'].quantiles_.tolist(),
-                }
-            elif params['transform'] == 'robust':
-                entry['center'] = float(params['scaler'].center_[0])
-                entry['scale'] = float(params['scaler'].scale_[0])
-            numeric_serialized[col] = entry
         return {
             'categorical_vocabs': self.categorical_vocabs,
-            'numeric_params': numeric_serialized,
+            'numeric_params': {col: _serialize_numeric(p) for col, p in self.numeric_params.items()},
         }
 
     @classmethod
     def from_dict(cls, d):
         obj = cls()
         obj.categorical_vocabs = d.get('categorical_vocabs', {})
-        raw_numeric = d.get('numeric_params', {})
-        for col, entry in raw_numeric.items():
-            params = {'transform': entry['transform']}
-            if 'median' in entry:
-                params['median'] = entry['median']
-            if entry['transform'] == 'min':
-                params['min_val'] = entry['min_val']
-            elif entry['transform'] == 'max':
-                params['max_val'] = entry['max_val']
-            elif entry['transform'] == 'mean':
-                params['mean_val'] = entry['mean_val']
-            elif entry['transform'] in ('quantile', 'log1p'):
-                qt = QuantileTransformer(
-                    n_quantiles=entry['qt_params']['n_quantiles'],
-                    output_distribution=entry['qt_params']['output_distribution'],
-                    random_state=0,
-                )
-                qt.references_ = np.array(entry['qt_params']['references_'])
-                qt.quantiles_ = np.array(entry['qt_params']['quantiles_'])
-                qt.n_features_in_ = 1
-                params['qt'] = qt
-            elif entry['transform'] == 'robust':
-                scaler = RobustScaler()
-                scaler.center_ = np.array([entry['center']])
-                scaler.scale_ = np.array([entry['scale']])
-                scaler.n_features_in_ = 1
-                params['scaler'] = scaler
-            obj.numeric_params[col] = params
+        obj.numeric_params = {col: _deserialize_numeric(e) for col, e in d.get('numeric_params', {}).items()}
         return obj
 
 
@@ -228,34 +241,31 @@ def _fit_numeric(series, transform):
     return params
 
 
+def _apply_qt(filled, index, params, log=False):
+    values = filled.values.reshape(-1, 1)
+    if log:
+        values = np.log1p(values)
+    return pd.Series(params['qt'].transform(values).flatten(), index=index)
+
+
+_numeric_apply = {
+    'min': lambda filled, idx, p: filled - p['min_val'],
+    'max': lambda filled, idx, p: filled / p['max_val'] if p['max_val'] != 0 else filled,
+    'mean': lambda filled, idx, p: filled - p['mean_val'],
+    'quantile': lambda filled, idx, p: _apply_qt(filled, idx, p),
+    'log1p': lambda filled, idx, p: _apply_qt(filled, idx, p, log=True),
+    'robust': lambda filled, idx, p: pd.Series(
+        p['scaler'].transform(filled.values.reshape(-1, 1)).flatten(), index=idx),
+}
+
+
 def _apply_numeric(series, params):
     """Apply fitted numeric transform to a series."""
     filled = series.fillna(params['median'])
     transform = params['transform']
-    if transform == 'min':
-        return filled - params['min_val']
-    elif transform == 'max':
-        max_val = params['max_val']
-        return filled / max_val if max_val != 0 else filled
-    elif transform == 'mean':
-        return filled - params['mean_val']
-    elif transform == 'quantile':
-        return pd.Series(
-            params['qt'].transform(filled.values.reshape(-1, 1)).flatten(),
-            index=series.index,
-        )
-    elif transform == 'log1p':
-        log_vals = np.log1p(filled.values.reshape(-1, 1))
-        return pd.Series(
-            params['qt'].transform(log_vals).flatten(),
-            index=series.index,
-        )
-    elif transform == 'robust':
-        return pd.Series(
-            params['scaler'].transform(filled.values.reshape(-1, 1)).flatten(),
-            index=series.index,
-        )
-    raise ValueError(f"Unknown transform: {transform}")
+    if transform not in _numeric_apply:
+        raise ValueError(f"Unknown transform: {transform}")
+    return _numeric_apply[transform](filled, series.index, params)
 
 
 def preprocess_dataset(data, tokenizer, device, column_specifications, numeric_transform,
@@ -282,7 +292,6 @@ def preprocess_dataset(data, tokenizer, device, column_specifications, numeric_t
     if fitting:
         fitted_transforms = FittedTransforms()
 
-    # Concatenate text columns with separator (tokenizer adds [CLS]/[SEP] automatically)
     sep = tokenizer.sep_token or " "
     texts = [
         f" {sep} ".join(str(row[col]) for col in column_specifications["text_cols"])

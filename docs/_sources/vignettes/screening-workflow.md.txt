@@ -2,7 +2,7 @@
 
 End-to-end example of using pubmlp to screen bibliometric records for a systematic review. Two approaches are shown:
 
-- **Approach A — Sequential single-label**: Train one model per screening criterion. Best when criteria have very different class distributions or when you need separate tuning per label.
+- **Approach A — Sequential single-label**: Train one model per screening criterion. Best when criteria have very different class distributions or when each label needs separate tuning.
 - **Approach B — Simultaneous multi-label**: Train one model that predicts all criteria at once. Best when criteria share signal from the same text, reducing total training time.
 
 Both approaches use multiple categorical and numeric columns.
@@ -182,7 +182,7 @@ unlabeled_ds_sc, _ = preprocess_dataset(
     fitted_transforms=fitted_sc
 )
 loader_sc = create_dataloader(unlabeled_ds_sc, SequentialSampler, config.eval_batch_size)
-model_sc.load_state_dict(torch.load("model_single_case.pth", map_location=device))
+model_sc.load_state_dict(torch.load("model_single_case.pth", map_location=device, weights_only=True))
 preds_sc, probs_sc = predict_model(model_sc, loader_sc, device)
 
 # Predict technology_use
@@ -191,7 +191,7 @@ unlabeled_ds_tu, _ = preprocess_dataset(
     fitted_transforms=fitted_tu
 )
 loader_tu = create_dataloader(unlabeled_ds_tu, SequentialSampler, config.eval_batch_size)
-model_tu.load_state_dict(torch.load("model_technology_use.pth", map_location=device))
+model_tu.load_state_dict(torch.load("model_technology_use.pth", map_location=device, weights_only=True))
 preds_tu, probs_tu = predict_model(model_tu, loader_tu, device)
 
 unlabeled_df["single_case"] = ["Yes" if p == 1 else "No" for p in preds_sc]
@@ -302,7 +302,7 @@ unlabeled_dataset, _ = preprocess_dataset(
 )
 unlabeled_loader = create_dataloader(unlabeled_dataset, SequentialSampler, config.eval_batch_size)
 
-model.load_state_dict(torch.load("model_multilabel.pth", map_location=device))
+model.load_state_dict(torch.load("model_multilabel.pth", map_location=device, weights_only=True))
 predictions, probabilities = predict_model(model, unlabeled_loader, device)
 
 # Multi-label: predictions and probabilities are list of lists

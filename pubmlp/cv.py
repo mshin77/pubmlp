@@ -77,7 +77,6 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
         train_data = data.iloc[train_indices].reset_index(drop=True)
         validation_data = data.iloc[validation_indices].reset_index(drop=True)
 
-        # Fit transforms on training fold, apply to validation fold
         train_dataset, fitted = preprocess_dataset(
             train_data, tokenizer, device, column_specifications,
             numeric_transform, max_length=config.max_length,
@@ -92,7 +91,6 @@ def cross_validate(data, tokenizer, device, column_specifications, numeric_trans
         train_loader = create_dataloader(train_dataset, RandomSampler, config.batch_size)
         validation_loader = create_dataloader(validation_dataset, SequentialSampler, config.eval_batch_size)
 
-        # Use fitted vocab sizes if available from this fold's training data
         fold_vocab_sizes = fitted.categorical_vocab_sizes if fitted.categorical_vocabs else categorical_vocab_sizes
 
         model = PubMLP(

@@ -105,6 +105,10 @@ Stores fitted parameters from training data for reuse on val/test sets. Serializ
 
 Dataset holding tokenized text, categorical/numeric features, and labels.
 
+#### `CachedEmbeddingDataset`
+
+Dataset of precomputed sentence embeddings + tabular features (cached-embedding fast path).
+
 #### `create_dataloader`
 
 Create DataLoader with custom collate function.
@@ -161,6 +165,10 @@ Stratified K-fold cross-validation with per-fold metrics.
 #### `plot_results`
 
 Plot training/validation loss and accuracy curves.
+
+#### `plot_al_progress`
+
+Plot active learning learning curve (Macro F1 vs labeled instances), with optional per-criterion overlays.
 
 #### `TemperatureScaling`
 
@@ -403,3 +411,15 @@ Suggest a batch size based on available GPU memory.
 #### `unpack_batch`
 
 Move batch tensors to device and return unpacked components.
+
+#### `default_forward_fn`
+
+Tokenized forward through encoder + classifier head.
+
+#### `cached_forward_fn`
+
+Cached-embedding forward through head only (skips encoder).
+
+#### `compute_cls_embeddings`
+
+Run the encoder once over a dataloader; returns `(N, hidden_size)` CPU tensor for the cached-embedding fast path.

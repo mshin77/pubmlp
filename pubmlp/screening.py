@@ -14,7 +14,6 @@ from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
-# Graceful imports for optional dependencies
 try:
     import nltk
     try:
@@ -117,8 +116,8 @@ def calculate_semantic_scores(evidence_list: List[Dict], criterion_description: 
             'max_score': float(max(scores)) if scores else np.nan,
             'count': len(scores),
         }
-    except Exception as e:
-        logger.error(f"Semantic scoring failed: {e}")
+    except Exception:
+        logger.exception("Semantic scoring failed")
         return {'individual_scores': [], 'mean_score': np.nan, 'max_score': np.nan, 'count': 0}
 
 
@@ -159,8 +158,8 @@ def regex_screen(input_file: str, inclusion_patterns: Dict, output_file: str = N
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         model = SentenceTransformer(model_name, device=device)
         logger.info(f"Semantic model loaded: {model_name} on {device}")
-    except Exception as e:
-        logger.error(f"Failed to load semantic model: {e}")
+    except Exception:
+        logger.exception("Failed to load semantic model")
 
     # Screen each criterion
     for criterion_name, criterion_config in inclusion_patterns.items():
@@ -269,13 +268,11 @@ def generate_descriptions(inclusion_patterns: Dict, domain: str = '') -> Dict:
 
 def _extract_terms(pattern: str) -> List[str]:
     """Extract readable terms from a regex pattern."""
-    # Remove regex syntax: \b, \w*, grouping, quantifiers
     cleaned = re.sub(r'\\[bwsd]\+?\*?', '', pattern)
     cleaned = re.sub(r'[\[\](){}|^$+*?.]', ' ', cleaned)
     cleaned = re.sub(r'\\', '', cleaned)
 
     terms = [t.strip().replace('-', ' ') for t in cleaned.split()]
-    # Deduplicate while preserving order
     seen = set()
     unique = []
     for t in terms:

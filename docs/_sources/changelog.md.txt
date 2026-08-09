@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 (2026-08-07)
+
+- Added a benchmark module for reproducible screening simulations, with a command-line entry point
+- Added calibration metrics for assessing predicted probability quality
+- Added the `[benchmark]` optional dependency group
+- Clarified multi-label input handling for active-learning query selection
+- Bounded transformer dependency versions for reproducible installs
+
 ## 0.4.1 (2026-05-16)
 
 - Refactored numeric preprocessing into dispatch tables to remove if/elif chains

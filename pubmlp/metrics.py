@@ -177,3 +177,48 @@ def calculate_ndcg(true_labels, probabilities):
     scores = [float(ndcg_score(true_array[:, j].reshape(1, -1), probability_array[:, j].reshape(1, -1)))
               for j in range(true_array.shape[1])]
     return float(np.mean(scores))
+
+
+def _ece_single(true_array, probability_array, n_bins):
+    bins = np.linspace(0.0, 1.0, n_bins + 1)
+    bin_index = np.clip(np.digitize(probability_array, bins[1:-1]), 0, n_bins - 1)
+    n_total = len(true_array)
+    ece = 0.0
+    for b in range(n_bins):
+        mask = bin_index == b
+        if not mask.any():
+            continue
+        ece += mask.sum() / n_total * abs(true_array[mask].mean() - probability_array[mask].mean())
+    return float(ece)
+
+
+def calculate_ece(true_labels, probabilities, n_bins=10):
+    """Expected calibration error with equal-width probability bins.
+
+    For multi-label (2D) inputs, computes per-label ECE and returns the macro average.
+    """
+    true_array = np.asarray(true_labels, dtype=float)
+    probability_array = np.asarray(probabilities, dtype=float)
+
+    if true_array.ndim == 1:
+        return _ece_single(true_array, probability_array, n_bins)
+
+    scores = [_ece_single(true_array[:, j], probability_array[:, j], n_bins)
+              for j in range(true_array.shape[1])]
+    return float(np.mean(scores))
+
+
+def calculate_brier(true_labels, probabilities):
+    """Brier score: mean squared error of predicted probabilities.
+
+    For multi-label (2D) inputs, computes per-label Brier and returns the macro average.
+    """
+    true_array = np.asarray(true_labels, dtype=float)
+    probability_array = np.asarray(probabilities, dtype=float)
+
+    if true_array.ndim == 1:
+        return float(np.mean((probability_array - true_array) ** 2))
+
+    scores = [float(np.mean((probability_array[:, j] - true_array[:, j]) ** 2))
+              for j in range(true_array.shape[1])]
+    return float(np.mean(scores))

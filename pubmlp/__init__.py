@@ -5,7 +5,7 @@ Fuses transformer embeddings with tabular features through a multilayer
 perceptron (MLP) for human-in-the-loop screening workflows.
 """
 
-__version__ = "0.4.1"
+__version__ = "0.5.0"
 __author__ = "Mikyung Shin"
 __license__ = "MIT"
 
@@ -34,6 +34,8 @@ from .metrics import (
     calculate_evaluation_metrics,
     calculate_wss_at_recall,
     calculate_ndcg,
+    calculate_ece,
+    calculate_brier,
 )
 from .preprocess import (
     preprocess_dataset,
@@ -107,6 +109,18 @@ from .sample import (
     count_pattern_matches,
     highlight_pattern_matches,
 )
+from .datasets import (
+    list_benchmarks,
+    load_benchmark,
+    load_manifest_corpus,
+    normalize_benchmark_frame,
+    build_column_specs,
+)
+from .benchmark import (
+    embed_dataset,
+    run_simulation,
+    summarize_runs,
+)
 
 __all__ = [
     'Config', 'default_config', 'fast_config', 'robust_config', 'hitl_config', 'domain_configs', 'sentence_transformer_models',
@@ -114,6 +128,7 @@ __all__ = [
     'train_evaluate_model', 'calculate_loss', 'calculate_accuracy', 'calculate_pos_weight',
     'predict_model', 'get_predictions_and_labels', 'flag_uncertain',
     'calculate_evaluation_metrics', 'calculate_wss_at_recall', 'calculate_ndcg',
+    'calculate_ece', 'calculate_brier',
     'preprocess_dataset', 'create_dataloader', 'split_data', 'CustomDataset', 'CachedEmbeddingDataset', 'collate_fn', 'FittedTransforms',
     'plot_results', 'plot_al_progress',
     'get_device', 'auto_batch_size', 'load_data', 'unpack_batch', 'default_forward_fn', 'cached_forward_fn',
@@ -131,4 +146,7 @@ __all__ = [
     'count_pattern_matches', 'highlight_pattern_matches',
     'score_full_text', 'compare_screening_configs',
     'generate_descriptions', 'confirm_descriptions',
+    'list_benchmarks', 'load_benchmark', 'load_manifest_corpus',
+    'normalize_benchmark_frame', 'build_column_specs',
+    'embed_dataset', 'run_simulation', 'summarize_runs',
 ]

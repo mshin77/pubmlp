@@ -30,8 +30,8 @@ See [Quick Start](https://mshin77.github.io/pubmlp/getting-started.html) and [Sc
 
 ## Citation
 
-- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.4.1) [Computer software]. <https://github.com/mshin77/pubmlp>
+- Shin, M. (2026). *pubmlp: Multimodal publication classifier with LLM and deep learning* (Python package version 0.5.0) [Computer software]. <https://github.com/mshin77/pubmlp>
 
 ## Reference
 
-- Shin, M., & McKenna, J. (in press). Exploring the research landscape on single-case design methodology using technology through text mining and large language models. *Journal of Behavioral Education*.
+- Shin, M., & McKenna, J. (2026). Exploring the research landscape on single-case design methodology using technology through text mining and large language models. *Journal of Behavioral Education*. https://doi.org/10.1007/s10864-026-09630-1

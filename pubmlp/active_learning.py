@@ -64,6 +64,14 @@ def rank_by_hybrid_max_random(probabilities, exploit_ratio=0.95, seed=42):
 
 
 def select_query_batch(probabilities, strategy='uncertainty', batch_size=20, seed=42):
+    """Rank unlabeled records by the chosen strategy and return the top batch_size indices.
+
+    For multi-label tasks, pass the full 2-D probability matrix (records x labels):
+    'uncertainty' averages |p - 0.5| across labels and 'max_relevance' takes the
+    per-record maximum. Collapsing the matrix beforehand (e.g., probabilities.max(axis=1))
+    treats a record that is certain on one label as certain overall and skips records
+    still uncertain on the remaining labels.
+    """
     probability_array = np.asarray(probabilities)
     ranked = {
         'uncertainty': lambda: rank_by_uncertainty(probability_array),

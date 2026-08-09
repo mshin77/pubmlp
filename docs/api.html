@@ -27,22 +27,23 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css?v=bf69dc6d" />
   
   <!-- So that users can add custom icons -->
-  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
     <script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=fd6eb6e6"></script>
-    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Changelog" href="changelog.html" />
@@ -50,20 +51,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -89,7 +96,7 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
   <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
     <span class="fa-solid fa-bars"></span>
@@ -186,11 +193,18 @@
       
         <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
       
         <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -203,8 +217,7 @@
           
           
           
-          <a href="https://github.com/mshin77/pubmlp" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/mshin77/pubmlp" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
 </ul></div>
       
@@ -296,11 +309,18 @@
         
           <div class="navbar-item">
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button></div>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
         
           <div class="navbar-item"><ul class="navbar-icon-links"
     aria-label="Icon Links">
@@ -313,8 +333,7 @@
           
           
           
-          <a href="https://github.com/mshin77/pubmlp" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
-            <span class="sr-only">GitHub</span></a>
+          <a href="https://github.com/mshin77/pubmlp" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
         </li>
 </ul></div>
         
@@ -324,6 +343,7 @@
   
     <div class="sidebar-primary-items__start sidebar-primary__section">
         <div class="sidebar-primary-item">
+
 <nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
@@ -335,8 +355,8 @@
     class="page-toc tocsection onthispage">
     <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration">Configuration</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#preset-configurations">Preset Configurations</a></li>
@@ -368,6 +388,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-evaluation-metrics"><code class="docutils literal notranslate"><span class="pre">calculate_evaluation_metrics</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-wss-at-recall"><code class="docutils literal notranslate"><span class="pre">calculate_wss_at_recall</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-ndcg"><code class="docutils literal notranslate"><span class="pre">calculate_ndcg</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-ece"><code class="docutils literal notranslate"><span class="pre">calculate_ece</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#calculate-brier"><code class="docutils literal notranslate"><span class="pre">calculate_brier</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-validate"><code class="docutils literal notranslate"><span class="pre">cross_validate</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-results"><code class="docutils literal notranslate"><span class="pre">plot_results</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-al-progress"><code class="docutils literal notranslate"><span class="pre">plot_al_progress</span></code></a></li>
@@ -410,6 +432,17 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simulate-al"><code class="docutils literal notranslate"><span class="pre">simulate_al</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rank-by-hybrid-max-uncertainty"><code class="docutils literal notranslate"><span class="pre">rank_by_hybrid_max_uncertainty</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#rank-by-hybrid-max-random"><code class="docutils literal notranslate"><span class="pre">rank_by_hybrid_max_random</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmarks">Benchmarks</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#list-benchmarks"><code class="docutils literal notranslate"><span class="pre">list_benchmarks</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#load-benchmark"><code class="docutils literal notranslate"><span class="pre">load_benchmark</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#load-manifest-corpus"><code class="docutils literal notranslate"><span class="pre">load_manifest_corpus</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize-benchmark-frame"><code class="docutils literal notranslate"><span class="pre">normalize_benchmark_frame</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-column-specs"><code class="docutils literal notranslate"><span class="pre">build_column_specs</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#embed-dataset"><code class="docutils literal notranslate"><span class="pre">embed_dataset</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#run-simulation"><code class="docutils literal notranslate"><span class="pre">run_simulation</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summarize-runs"><code class="docutils literal notranslate"><span class="pre">summarize_runs</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stopping-rules">Stopping Rules</a><ul class="nav section-nav flex-column">
@@ -625,7 +658,7 @@
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">al_initial_sample_pct</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">0.1</span></code></p></td>
-<td><p>Initial random sample fraction</p></td>
+<td><p>Initial random sample fraction (benchmark simulations fix this at 1%)</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>Categorical encoding</strong></p></td>
 <td><p></p></td>
@@ -850,6 +883,14 @@
 <h3><code class="docutils literal notranslate"><span class="pre">calculate_ndcg</span></code><a class="headerlink" href="#calculate-ndcg" title="Link to this heading">#</a></h3>
 <p>NDCG via sklearn.metrics.ndcg_score (Järvelin &amp; Kekäläinen, 2002).</p>
 </section>
+<section id="calculate-ece">
+<h3><code class="docutils literal notranslate"><span class="pre">calculate_ece</span></code><a class="headerlink" href="#calculate-ece" title="Link to this heading">#</a></h3>
+<p>Expected calibration error with equal-width probability bins (default 10). Multi-label (2-D) input returns the per-label macro average. Pair with <code class="docutils literal notranslate"><span class="pre">calibrate_model</span></code> to report calibration quality before and after temperature scaling.</p>
+</section>
+<section id="calculate-brier">
+<h3><code class="docutils literal notranslate"><span class="pre">calculate_brier</span></code><a class="headerlink" href="#calculate-brier" title="Link to this heading">#</a></h3>
+<p>Brier score (Brier, 1950): mean squared error of predicted probabilities. Multi-label (2-D) input returns the per-label macro average.</p>
+</section>
 <section id="cross-validate">
 <h3><code class="docutils literal notranslate"><span class="pre">cross_validate</span></code><a class="headerlink" href="#cross-validate" title="Link to this heading">#</a></h3>
 <p>Stratified K-fold cross-validation with per-fold metrics.</p>
@@ -1002,6 +1043,12 @@
 <section id="select-query-batch">
 <h3><code class="docutils literal notranslate"><span class="pre">select_query_batch</span></code><a class="headerlink" href="#select-query-batch" title="Link to this heading">#</a></h3>
 <p>Select the most uncertain samples for human review.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pubmlp</span><span class="w"> </span><span class="kn">import</span> <span class="n">select_query_batch</span>
+
+<span class="n">query_indices</span> <span class="o">=</span> <span class="n">select_query_batch</span><span class="p">(</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;uncertainty&#39;</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For multi-label tasks, pass the full 2-D probability matrix (records × labels): <code class="docutils literal notranslate"><span class="pre">uncertainty</span></code> averages |p − 0.5| across labels and <code class="docutils literal notranslate"><span class="pre">max_relevance</span></code> takes the per-record maximum. Collapsing the matrix beforehand (e.g., <code class="docutils literal notranslate"><span class="pre">probabilities.max(axis=1)</span></code>) treats a record that is certain on one label as certain overall and skips records still uncertain on the remaining labels.</p>
 </section>
 <section id="create-review-batch">
 <h3><code class="docutils literal notranslate"><span class="pre">create_review_batch</span></code><a class="headerlink" href="#create-review-batch" title="Link to this heading">#</a></h3>
@@ -1030,6 +1077,43 @@
 <section id="rank-by-hybrid-max-random">
 <h3><code class="docutils literal notranslate"><span class="pre">rank_by_hybrid_max_random</span></code><a class="headerlink" href="#rank-by-hybrid-max-random" title="Link to this heading">#</a></h3>
 <p>95% max-relevance + 5% random ranking strategy.</p>
+</section>
+</section>
+<section id="benchmarks">
+<h2>Benchmarks<a class="headerlink" href="#benchmarks" title="Link to this heading">#</a></h2>
+<section id="list-benchmarks">
+<h3><code class="docutils literal notranslate"><span class="pre">list_benchmarks</span></code><a class="headerlink" href="#list-benchmarks" title="Link to this heading">#</a></h3>
+<p>Names available from the Synergy collection. Needs the <code class="docutils literal notranslate"><span class="pre">benchmark</span></code> extra: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pubmlp[benchmark]</span></code>.</p>
+</section>
+<section id="load-benchmark">
+<h3><code class="docutils literal notranslate"><span class="pre">load_benchmark</span></code><a class="headerlink" href="#load-benchmark" title="Link to this heading">#</a></h3>
+<p>One Synergy dataset as a normalized frame (<code class="docutils literal notranslate"><span class="pre">title</span></code>, <code class="docutils literal notranslate"><span class="pre">abstract</span></code>, <code class="docutils literal notranslate"><span class="pre">year</span></code>, <code class="docutils literal notranslate"><span class="pre">journal</span></code>, <code class="docutils literal notranslate"><span class="pre">label_included</span></code>).</p>
+</section>
+<section id="load-manifest-corpus">
+<h3><code class="docutils literal notranslate"><span class="pre">load_manifest_corpus</span></code><a class="headerlink" href="#load-manifest-corpus" title="Link to this heading">#</a></h3>
+<p>Rebuild a private corpus by joining a packaged IDs+labels manifest against a user-supplied database export. Raises when ID coverage falls below 95%.</p>
+</section>
+<section id="normalize-benchmark-frame">
+<h3><code class="docutils literal notranslate"><span class="pre">normalize_benchmark_frame</span></code><a class="headerlink" href="#normalize-benchmark-frame" title="Link to this heading">#</a></h3>
+<p>Map any labeled frame onto the benchmark column set.</p>
+</section>
+<section id="build-column-specs">
+<h3><code class="docutils literal notranslate"><span class="pre">build_column_specs</span></code><a class="headerlink" href="#build-column-specs" title="Link to this heading">#</a></h3>
+<p>Column specifications, numeric transform, and metadata fusion level (<code class="docutils literal notranslate"><span class="pre">full</span></code>, <code class="docutils literal notranslate"><span class="pre">partial</span></code>, <code class="docutils literal notranslate"><span class="pre">text_only</span></code>) for a benchmark frame.</p>
+</section>
+<section id="embed-dataset">
+<h3><code class="docutils literal notranslate"><span class="pre">embed_dataset</span></code><a class="headerlink" href="#embed-dataset" title="Link to this heading">#</a></h3>
+<p>One-time sentence embedding per dataset, cached to disk by model name and data hash.</p>
+</section>
+<section id="run-simulation">
+<h3><code class="docutils literal notranslate"><span class="pre">run_simulation</span></code><a class="headerlink" href="#run-simulation" title="Link to this heading">#</a></h3>
+<p>Per-seed strategy simulation (<code class="docutils literal notranslate"><span class="pre">random</span></code>, <code class="docutils literal notranslate"><span class="pre">active_learning</span></code>, <code class="docutils literal notranslate"><span class="pre">tfidf_nb</span></code>, <code class="docutils literal notranslate"><span class="pre">semantic</span></code>) with cached-embedding or fine-tune engines; one tidy row per evaluation with F1, ROC-AUC, ECE, Brier, NDCG, WSS&#64;95, and stopping statistics.</p>
+<p>Calibration metrics (<code class="docutils literal notranslate"><span class="pre">ece</span></code>, <code class="docutils literal notranslate"><span class="pre">brier</span></code>) are meaningful only for the <code class="docutils literal notranslate"><span class="pre">random</span></code> and <code class="docutils literal notranslate"><span class="pre">active_learning</span></code> strategies, whose probabilities are temperature-scaled; <code class="docutils literal notranslate"><span class="pre">tfidf_nb</span></code> reports raw naive-Bayes posteriors and <code class="docutils literal notranslate"><span class="pre">semantic</span></code> reports min-max-scaled cosine scores.</p>
+<p>CLI: <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pubmlp.benchmark</span> <span class="pre">--dataset</span> <span class="pre">NAME_OR_PATH</span> <span class="pre">--strategies</span> <span class="pre">random,active_learning,tfidf_nb</span> <span class="pre">--seeds</span> <span class="pre">20</span> <span class="pre">--out</span> <span class="pre">runs.csv</span></code></p>
+</section>
+<section id="summarize-runs">
+<h3><code class="docutils literal notranslate"><span class="pre">summarize_runs</span></code><a class="headerlink" href="#summarize-runs" title="Link to this heading">#</a></h3>
+<p>Mean (SD) per dataset and strategy at final effort, plus F1 curve frames.</p>
 </section>
 </section>
 <section id="stopping-rules">
@@ -1141,8 +1225,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1168,7 +1252,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
 </p></div>
       
     </div>

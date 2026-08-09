@@ -36,7 +36,7 @@ Dataclass holding all training and model hyperparameters.
 | **Active learning** | | |
 | `al_query_strategy` | `'uncertainty'` | Query strategy (`uncertainty`, `random`, `max_relevance`, `hybrid_max_uncertainty`, `hybrid_max_random`) |
 | `al_batch_size` | `20` | Records per AL iteration |
-| `al_initial_sample_pct` | `0.1` | Initial random sample fraction |
+| `al_initial_sample_pct` | `0.1` | Initial random sample fraction (benchmark simulations fix this at 1%) |
 | **Categorical encoding** | | |
 | `rare_threshold` | `5` | Minimum count for a categorical value to get its own embedding |
 | **Class weighting** | | |
@@ -157,6 +157,14 @@ WSS@recall (Cohen et al., 2006): fraction of screening effort saved at target re
 #### `calculate_ndcg`
 
 NDCG via sklearn.metrics.ndcg_score (Järvelin & Kekäläinen, 2002).
+
+#### `calculate_ece`
+
+Expected calibration error with equal-width probability bins (default 10). Multi-label (2-D) input returns the per-label macro average. Pair with `calibrate_model` to report calibration quality before and after temperature scaling.
+
+#### `calculate_brier`
+
+Brier score (Brier, 1950): mean squared error of predicted probabilities. Multi-label (2-D) input returns the per-label macro average.
 
 #### `cross_validate`
 
@@ -314,6 +322,14 @@ train_idx, val_idx = safe_stratified_split(X, y, test_size=0.2, random_state=42)
 
 Select the most uncertain samples for human review.
 
+```python
+from pubmlp import select_query_batch
+
+query_indices = select_query_batch(probabilities, strategy='uncertainty', batch_size=30)
+```
+
+For multi-label tasks, pass the full 2-D probability matrix (records &times; labels): `uncertainty` averages |p &minus; 0.5| across labels and `max_relevance` takes the per-record maximum. Collapsing the matrix beforehand (e.g., `probabilities.max(axis=1)`) treats a record that is certain on one label as certain overall and skips records still uncertain on the remaining labels.
+
 #### `create_review_batch`
 
 Create a review batch DataFrame with model probability and prediction columns.
@@ -341,6 +357,44 @@ Offline AL simulation using ground truth labels; `model_fn(train_df, unlabeled_d
 #### `rank_by_hybrid_max_random`
 
 95% max-relevance + 5% random ranking strategy.
+
+## Benchmarks
+
+#### `list_benchmarks`
+
+Names available from the Synergy collection. Needs the `benchmark` extra: `pip install pubmlp[benchmark]`.
+
+#### `load_benchmark`
+
+One Synergy dataset as a normalized frame (`title`, `abstract`, `year`, `journal`, `label_included`).
+
+#### `load_manifest_corpus`
+
+Rebuild a private corpus by joining a packaged IDs+labels manifest against a user-supplied database export. Raises when ID coverage falls below 95%.
+
+#### `normalize_benchmark_frame`
+
+Map any labeled frame onto the benchmark column set.
+
+#### `build_column_specs`
+
+Column specifications, numeric transform, and metadata fusion level (`full`, `partial`, `text_only`) for a benchmark frame.
+
+#### `embed_dataset`
+
+One-time sentence embedding per dataset, cached to disk by model name and data hash.
+
+#### `run_simulation`
+
+Per-seed strategy simulation (`random`, `active_learning`, `tfidf_nb`, `semantic`) with cached-embedding or fine-tune engines; one tidy row per evaluation with F1, ROC-AUC, ECE, Brier, NDCG, WSS@95, and stopping statistics.
+
+Calibration metrics (`ece`, `brier`) are meaningful only for the `random` and `active_learning` strategies, whose probabilities are temperature-scaled; `tfidf_nb` reports raw naive-Bayes posteriors and `semantic` reports min-max-scaled cosine scores.
+
+CLI: `python -m pubmlp.benchmark --dataset NAME_OR_PATH --strategies random,active_learning,tfidf_nb --seeds 20 --out runs.csv`
+
+#### `summarize_runs`
+
+Mean (SD) per dataset and strategy at final effort, plus F1 curve frames.
 
 ## Stopping Rules
 

@@ -68,8 +68,8 @@ def create_stratified_sample(df: pd.DataFrame, patterns: Dict[str, str],
     """
     if not _has_iterstrat:
         raise ImportError(
-            "iterstrat is required for stratified sampling. "
-            "Install: pip install iterative-stratification"
+            "Stratified sampling requires the screening extra: "
+            'pip install "pubmlp[screening]"'
         )
 
     if text_cols is None:

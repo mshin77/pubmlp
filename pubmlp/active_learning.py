@@ -158,7 +158,9 @@ def compare_reviewers(model_predictions, human_labels):
     model_prediction_array = np.asarray(model_predictions)
     human_label_array = np.asarray(human_labels)
     agreed = np.sum(model_prediction_array == human_label_array)
-    kappa = cohen_kappa_score(model_prediction_array, human_label_array) if len(set(model_prediction_array) | set(human_label_array)) > 1 else 1.0
+    observed_classes = set(model_prediction_array) | set(human_label_array)
+    kappa = (cohen_kappa_score(model_prediction_array, human_label_array)
+             if len(observed_classes) > 1 else None)
     disagreement_indices = np.where(model_prediction_array != human_label_array)[0]
     return {
         'agreement_rate': agreed / len(human_label_array),

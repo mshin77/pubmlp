@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/documentation_options.js?v=7f41d439"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
@@ -388,27 +388,29 @@
                   
   <section id="pubmlp">
 <h1>pubmlp<a class="headerlink" href="#pubmlp" title="Link to this heading">#</a></h1>
-<p>Multimodal publication classifier with LLM and deep learning. Fuses transformer embeddings with tabular features through a multilayer perceptron (MLP) for human-in-the-loop screening workflows.</p>
+<p>Multimodal publication classifier with LLM and deep learning. Fuses transformer embeddings from <a class="reference external" href="https://huggingface.co/docs/transformers">Hugging Face</a> with tabular features through a multilayer perceptron (MLP) on <a class="reference external" href="https://pytorch.org/">PyTorch</a> for human-in-the-loop screening. Screen by matched rules, by semantic similarity through <a class="reference external" href="https://www.sbert.net/">sentence-transformers</a>, by the classifier with active learning, or by a language model as a second rater. Read exports in every format <a class="reference external" href="https://www.bibliometrix.org/">bibliometrix</a> accepts, extract page-anchored evidence with <a class="reference external" href="https://github.com/jsvine/pdfplumber">pdfplumber</a>, and report SAFE stopping and <a class="reference external" href="https://www.prisma-statement.org/">PRISMA 2020</a> Item 8.</p>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pubmlp
 </pre></div>
 </div>
 <p>With optional dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>pubmlp<span class="o">[</span>screening<span class="o">]</span><span class="w">  </span><span class="c1"># screening tools (openpyxl, nltk)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pubmlp[screening]&quot;</span><span class="w">   </span><span class="c1"># regex and semantic screening, stratified sampling</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pubmlp[fulltext]&quot;</span><span class="w">    </span><span class="c1"># PDF reading with page-anchored evidence</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pubmlp[benchmark]&quot;</span><span class="w">   </span><span class="c1"># SYNERGY benchmark datasets</span>
 </pre></div>
 </div>
 </section>
 <section id="citation">
 <h2>Citation<a class="headerlink" href="#citation" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Shin, M. (2026). <em>pubmlp: Multimodal publication classifier with LLM and deep learning</em> (Python package version 0.5.0) [Computer software]. <a href="https://github.com/mshin77/pubmlp">https://github.com/mshin77/pubmlp</a></p></li>
+<li><p>Shin, M. (2026). <em>pubmlp: Multimodal publication classifier with LLM and deep learning</em> (Python package version 0.6.0) [Computer software]. <a href="https://github.com/mshin77/pubmlp">https://github.com/mshin77/pubmlp</a></p></li>
 </ul>
 </section>
 <section id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Shin, M., &amp; McKenna, J. (in press). Exploring the research landscape on single-case design methodology using technology through text mining and large language models. <em>Journal of Behavioral Education</em>.</p></li>
+<li><p>Shin, M., &amp; McKenna, J. (2026). Exploring the research landscape on single-case design methodology using technology through text mining and large language models. <em>Journal of Behavioral Education</em>. <a href="https://doi.org/10.1007/s10864-026-09630-1">https://doi.org/10.1007/s10864-026-09630-1</a></p></li>
 </ul>
 <div class="toctree-wrapper compound">
 </div>

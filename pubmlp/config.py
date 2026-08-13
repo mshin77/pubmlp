@@ -39,6 +39,8 @@ class Config:
         # Uncertainty thresholds
         self.uncertainty_low = kwargs.get('uncertainty_low', 0.3)
         self.uncertainty_high = kwargs.get('uncertainty_high', 0.7)
+        # the cut a probability becomes a predicted class at, for agreement figures
+        self.decision_threshold = kwargs.get('decision_threshold', 0.5)
 
         # Cross-validation
         self.n_folds = kwargs.get('n_folds', 5)
@@ -49,7 +51,7 @@ class Config:
         # Active learning
         self.al_query_strategy = kwargs.get('al_query_strategy', 'uncertainty')
         self.al_batch_size = kwargs.get('al_batch_size', 20)
-        self.al_initial_sample_pct = kwargs.get('al_initial_sample_pct', 0.1)
+        self.al_initial_sample_pct = kwargs.get('al_initial_sample_pct', 0.01)
 
         # Categorical encoding
         self.rare_threshold = kwargs.get('rare_threshold', 5)
@@ -58,9 +60,9 @@ class Config:
         self.pos_weight = kwargs.get('pos_weight', 'auto')
 
         # SAFE stopping
-        self.safe_consecutive_irrelevant = kwargs.get('safe_consecutive_irrelevant', 50)
-        self.safe_min_screened_pct = kwargs.get('safe_min_screened_pct', 0.5)
-        self.safe_random_sample_pct = kwargs.get('safe_random_sample_pct', 0.1)
+        self.safe_consecutive_irrelevant = kwargs.get('safe_consecutive_irrelevant', 200)
+        self.safe_min_screened_pct = kwargs.get('safe_min_screened_pct', 0.10)
+        self.safe_random_sample_pct = kwargs.get('safe_random_sample_pct', 0.01)
         self.safe_switch_model = kwargs.get('safe_switch_model', False)
 
         if self.model_name is None:
@@ -112,8 +114,10 @@ robust_config = Config(
 hitl_config = Config(
     al_query_strategy='hybrid_max_uncertainty',
     al_batch_size=20,
-    safe_consecutive_irrelevant=50,
-    safe_min_screened_pct=0.5,
+    al_initial_sample_pct=0.01,
+    safe_consecutive_irrelevant=200,
+    safe_min_screened_pct=0.10,
+    safe_random_sample_pct=0.01,
 )
 
 domain_configs = {

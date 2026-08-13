@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/documentation_options.js?v=7f41d439"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api';</script>
@@ -445,9 +445,53 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#summarize-runs"><code class="docutils literal notranslate"><span class="pre">summarize_runs</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#llm-screener">LLM Screener</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#llm-screen"><code class="docutils literal notranslate"><span class="pre">llm_screen</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-prompt"><code class="docutils literal notranslate"><span class="pre">build_prompt</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#parse-response"><code class="docutils literal notranslate"><span class="pre">parse_response</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#evidence">Evidence</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#find-keyword-spans"><code class="docutils literal notranslate"><span class="pre">find_keyword_spans</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#search-document"><code class="docutils literal notranslate"><span class="pre">search_document</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#highlight-markdown"><code class="docutils literal notranslate"><span class="pre">highlight_markdown</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#format-evidence"><code class="docutils literal notranslate"><span class="pre">format_evidence</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pattern-from-terms"><code class="docutils literal notranslate"><span class="pre">pattern_from_terms</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#full-text">Full Text</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#read-pdf"><code class="docutils literal notranslate"><span class="pre">read_pdf</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detect-page-labels"><code class="docutils literal notranslate"><span class="pre">detect_page_labels</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detect-sections"><code class="docutils literal notranslate"><span class="pre">detect_sections</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-fulltext-evidence"><code class="docutils literal notranslate"><span class="pre">extract_fulltext_evidence</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#format-anchor"><code class="docutils literal notranslate"><span class="pre">format_anchor</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieval">Retrieval</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#chunk-text"><code class="docutils literal notranslate"><span class="pre">chunk_text</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-index"><code class="docutils literal notranslate"><span class="pre">build_index</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#retrieve"><code class="docutils literal notranslate"><span class="pre">retrieve</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-with-rag"><code class="docutils literal notranslate"><span class="pre">extract_with_rag</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#confidence">Confidence</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#score-answer"><code class="docutils literal notranslate"><span class="pre">score_answer</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interpret-confidence"><code class="docutils literal notranslate"><span class="pre">interpret_confidence</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#needs-escalation"><code class="docutils literal notranslate"><span class="pre">needs_escalation</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#score-extractions"><code class="docutils literal notranslate"><span class="pre">score_extractions</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#confidence-report"><code class="docutils literal notranslate"><span class="pre">confidence_report</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#provenance">Provenance</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#provenancetracker"><code class="docutils literal notranslate"><span class="pre">ProvenanceTracker</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#load-provenance"><code class="docutils literal notranslate"><span class="pre">load_provenance</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compare-provenances"><code class="docutils literal notranslate"><span class="pre">compare_provenances</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stopping-rules">Stopping Rules</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#recall-target-test"><code class="docutils literal notranslate"><span class="pre">recall_target_test</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#should-stop"><code class="docutils literal notranslate"><span class="pre">should_stop</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#expected-relevant"><code class="docutils literal notranslate"><span class="pre">expected_relevant</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#update-stopping-state"><code class="docutils literal notranslate"><span class="pre">update_stopping_state</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#estimate-recall"><code class="docutils literal notranslate"><span class="pre">estimate_recall</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#generate-stopping-report"><code class="docutils literal notranslate"><span class="pre">generate_stopping_report</span></code></a></li>
@@ -1116,6 +1160,124 @@
 <p>Mean (SD) per dataset and strategy at final effort, plus F1 curve frames.</p>
 </section>
 </section>
+<section id="llm-screener">
+<h2>LLM Screener<a class="headerlink" href="#llm-screener" title="Link to this heading">#</a></h2>
+<section id="llm-screen">
+<h3><code class="docutils literal notranslate"><span class="pre">llm_screen</span></code><a class="headerlink" href="#llm-screen" title="Link to this heading">#</a></h3>
+<p>Screen records with a language model as an additional independent screener, never a sole screener. Takes a <code class="docutils literal notranslate"><span class="pre">respond</span></code> callable so the caller owns provider access and credentials. Returns the frame with <code class="docutils literal notranslate"><span class="pre">{criterion}_llm</span></code>, <code class="docutils literal notranslate"><span class="pre">{criterion}_llm_confidence</span></code>, <code class="docutils literal notranslate"><span class="pre">{criterion}_llm_rationale</span></code>, and <code class="docutils literal notranslate"><span class="pre">llm_meets_all_criteria</span></code>, plus a provenance dict for reporting. Self-reported confidence is not calibrated and is not comparable to <code class="docutils literal notranslate"><span class="pre">predict_model</span></code> probabilities.</p>
+</section>
+<section id="build-prompt">
+<h3><code class="docutils literal notranslate"><span class="pre">build_prompt</span></code><a class="headerlink" href="#build-prompt" title="Link to this heading">#</a></h3>
+<p>Compose the screening prompt for one record from the criterion descriptions.</p>
+</section>
+<section id="parse-response">
+<h3><code class="docutils literal notranslate"><span class="pre">parse_response</span></code><a class="headerlink" href="#parse-response" title="Link to this heading">#</a></h3>
+<p>Extract per-criterion decisions from a model reply; missing or unparseable decisions return None rather than a guess.</p>
+</section>
+</section>
+<section id="evidence">
+<h2>Evidence<a class="headerlink" href="#evidence" title="Link to this heading">#</a></h2>
+<section id="find-keyword-spans">
+<h3><code class="docutils literal notranslate"><span class="pre">find_keyword_spans</span></code><a class="headerlink" href="#find-keyword-spans" title="Link to this heading">#</a></h3>
+<p>Find a keyword in text with the surrounding context. Returns each hit with the match offset inside its own context and the absolute bounds in the source, so two hits sharing context can be told from two that stand apart. The keyword is a literal, not a pattern.</p>
+</section>
+<section id="search-document">
+<h3><code class="docutils literal notranslate"><span class="pre">search_document</span></code><a class="headerlink" href="#search-document" title="Link to this heading">#</a></h3>
+<p>Search a parsed document for keywords, anchoring each hit to the printed page and the section it sits in.</p>
+</section>
+<section id="highlight-markdown">
+<h3><code class="docutils literal notranslate"><span class="pre">highlight_markdown</span></code><a class="headerlink" href="#highlight-markdown" title="Link to this heading">#</a></h3>
+<p>Render one span with the matched term in bold.</p>
+</section>
+<section id="format-evidence">
+<h3><code class="docutils literal notranslate"><span class="pre">format_evidence</span></code><a class="headerlink" href="#format-evidence" title="Link to this heading">#</a></h3>
+<p>Join spans into a single string for an evidence column.</p>
+</section>
+<section id="pattern-from-terms">
+<h3><code class="docutils literal notranslate"><span class="pre">pattern_from_terms</span></code><a class="headerlink" href="#pattern-from-terms" title="Link to this heading">#</a></h3>
+<p>Build a search pattern for <code class="docutils literal notranslate"><span class="pre">regex_screen</span></code> from plain terms, taking the truncation already used in a database search. A phrase matches across a line break; everything else is literal.</p>
+</section>
+</section>
+<section id="full-text">
+<h2>Full Text<a class="headerlink" href="#full-text" title="Link to this heading">#</a></h2>
+<section id="read-pdf">
+<h3><code class="docutils literal notranslate"><span class="pre">read_pdf</span></code><a class="headerlink" href="#read-pdf" title="Link to this heading">#</a></h3>
+<p>Read a PDF into per-page text through pdfplumber.</p>
+</section>
+<section id="detect-page-labels">
+<h3><code class="docutils literal notranslate"><span class="pre">detect_page_labels</span></code><a class="headerlink" href="#detect-page-labels" title="Link to this heading">#</a></h3>
+<p>Read the page number printed in the document, accepted only when the printed-to-file offset is consistent.</p>
+</section>
+<section id="detect-sections">
+<h3><code class="docutils literal notranslate"><span class="pre">detect_sections</span></code><a class="headerlink" href="#detect-sections" title="Link to this heading">#</a></h3>
+<p>Assign each page the heading it falls under, including headings that share a line with body text.</p>
+</section>
+<section id="extract-fulltext-evidence">
+<h3><code class="docutils literal notranslate"><span class="pre">extract_fulltext_evidence</span></code><a class="headerlink" href="#extract-fulltext-evidence" title="Link to this heading">#</a></h3>
+<p>Return spans anchored to printed page and section for each criterion.</p>
+</section>
+<section id="format-anchor">
+<h3><code class="docutils literal notranslate"><span class="pre">format_anchor</span></code><a class="headerlink" href="#format-anchor" title="Link to this heading">#</a></h3>
+<p>Render a span’s location, marking it as a file position when the document carried no printed number.</p>
+</section>
+</section>
+<section id="retrieval">
+<h2>Retrieval<a class="headerlink" href="#retrieval" title="Link to this heading">#</a></h2>
+<section id="chunk-text">
+<h3><code class="docutils literal notranslate"><span class="pre">chunk_text</span></code><a class="headerlink" href="#chunk-text" title="Link to this heading">#</a></h3>
+<p>Split text into overlapping chunks, breaking at whitespace.</p>
+</section>
+<section id="build-index">
+<h3><code class="docutils literal notranslate"><span class="pre">build_index</span></code><a class="headerlink" href="#build-index" title="Link to this heading">#</a></h3>
+<p>Embed chunks once for reuse across queries.</p>
+</section>
+<section id="retrieve">
+<h3><code class="docutils literal notranslate"><span class="pre">retrieve</span></code><a class="headerlink" href="#retrieve" title="Link to this heading">#</a></h3>
+<p>Rank chunks against a query by cosine similarity, in memory and with no vector database.</p>
+</section>
+<section id="extract-with-rag">
+<h3><code class="docutils literal notranslate"><span class="pre">extract_with_rag</span></code><a class="headerlink" href="#extract-with-rag" title="Link to this heading">#</a></h3>
+<p>Answer questions from retrieved passages. Generation goes through the same <code class="docutils literal notranslate"><span class="pre">respond</span></code> callable <code class="docutils literal notranslate"><span class="pre">llm_screen</span></code> takes. Every answer carries its passages and a grounding score; answers below the threshold are flagged for a second reviewer rather than accepted.</p>
+</section>
+</section>
+<section id="confidence">
+<h2>Confidence<a class="headerlink" href="#confidence" title="Link to this heading">#</a></h2>
+<section id="score-answer">
+<h3><code class="docutils literal notranslate"><span class="pre">score_answer</span></code><a class="headerlink" href="#score-answer" title="Link to this heading">#</a></h3>
+<p>Score how well an extracted answer is grounded in its passages. A heuristic for triage, not a probability, and not comparable to <code class="docutils literal notranslate"><span class="pre">predict_model</span></code> output or to a model’s self-report.</p>
+</section>
+<section id="interpret-confidence">
+<h3><code class="docutils literal notranslate"><span class="pre">interpret_confidence</span></code><a class="headerlink" href="#interpret-confidence" title="Link to this heading">#</a></h3>
+<p>Band label for a grounding score.</p>
+</section>
+<section id="needs-escalation">
+<h3><code class="docutils literal notranslate"><span class="pre">needs_escalation</span></code><a class="headerlink" href="#needs-escalation" title="Link to this heading">#</a></h3>
+<p>Whether an extraction should go to a second reviewer.</p>
+</section>
+<section id="score-extractions">
+<h3><code class="docutils literal notranslate"><span class="pre">score_extractions</span></code><a class="headerlink" href="#score-extractions" title="Link to this heading">#</a></h3>
+<p>Score a list of extractions and flag the ones needing review.</p>
+</section>
+<section id="confidence-report">
+<h3><code class="docutils literal notranslate"><span class="pre">confidence_report</span></code><a class="headerlink" href="#confidence-report" title="Link to this heading">#</a></h3>
+<p>Counts by band and how many extractions need a second reviewer.</p>
+</section>
+</section>
+<section id="provenance">
+<h2>Provenance<a class="headerlink" href="#provenance" title="Link to this heading">#</a></h2>
+<section id="provenancetracker">
+<h3><code class="docutils literal notranslate"><span class="pre">ProvenanceTracker</span></code><a class="headerlink" href="#provenancetracker" title="Link to this heading">#</a></h3>
+<p>Record what a run did: environment and package versions, model checkpoint, random seed, data size, retrieval configuration, calibration, decision threshold, and criterion descriptions verbatim. Prompts are recorded as sent with a running SHA-256 digest.</p>
+</section>
+<section id="load-provenance">
+<h3><code class="docutils literal notranslate"><span class="pre">load_provenance</span></code><a class="headerlink" href="#load-provenance" title="Link to this heading">#</a></h3>
+<p>Read a saved provenance record.</p>
+</section>
+<section id="compare-provenances">
+<h3><code class="docutils literal notranslate"><span class="pre">compare_provenances</span></code><a class="headerlink" href="#compare-provenances" title="Link to this heading">#</a></h3>
+<p>Report which recorded fields differ between two runs, ignoring timestamps.</p>
+</section>
+</section>
 <section id="stopping-rules">
 <h2>Stopping Rules<a class="headerlink" href="#stopping-rules" title="Link to this heading">#</a></h2>
 <section id="recall-target-test">
@@ -1124,7 +1286,11 @@
 </section>
 <section id="should-stop">
 <h3><code class="docutils literal notranslate"><span class="pre">should_stop</span></code><a class="headerlink" href="#should-stop" title="Link to this heading">#</a></h3>
-<p>Evaluate whether screening can stop based on SAFE criterion.</p>
+<p>SAFE Phase 2 stopping test. Criteria 3 and 4 (minimum screened, consecutive irrelevant) come from state and config. Criteria 1 and 2 (all predefined relevant found, screened at least twice the expected relevant count) are evaluated only when <code class="docutils literal notranslate"><span class="pre">all_known_relevant_found</span></code> and <code class="docutils literal notranslate"><span class="pre">n_expected_relevant</span></code> are supplied, and skipped otherwise. Omitting both tests two of the four criteria.</p>
+</section>
+<section id="expected-relevant">
+<h3><code class="docutils literal notranslate"><span class="pre">expected_relevant</span></code><a class="headerlink" href="#expected-relevant" title="Link to this heading">#</a></h3>
+<p>Project the corpus relevant count from a probability sample. Under active learning that is the prior-knowledge draw, since every later batch is model-selected.</p>
 </section>
 <section id="update-stopping-state">
 <h3><code class="docutils literal notranslate"><span class="pre">update_stopping_state</span></code><a class="headerlink" href="#update-stopping-state" title="Link to this heading">#</a></h3>

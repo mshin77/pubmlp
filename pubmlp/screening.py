@@ -416,3 +416,49 @@ def compare_screening_configs(input_file: str, configs: Dict[str, Dict],
             })
 
     return pd.DataFrame(rows)
+
+
+def pattern_from_terms(terms):
+    r"""Build a search pattern from plain terms, so nobody has to write a regex.
+
+    Takes the truncation already used in a database search: ``multiple-baseline*``
+    finds both the singular and the plural. A phrase matches across any run of
+    whitespace, so "single-case design" still matches across a line break.
+    Everything else is literal, so a bracket or a full stop searches for itself
+    rather than silently becoming a wildcard.
+
+    Args:
+        terms: Comma-separated string, or a sequence of terms.
+
+    Returns:
+        str: A pattern for ``regex_screen``, or an empty string for no terms.
+
+    Examples:
+        >>> pattern_from_terms('single-case design, technology use')
+        '(?:\\bsingle\\-case\\s+design\\b|\\btechnology\\s+use\\b)'
+    """
+    if isinstance(terms, str):
+        terms = re.split(r'[,;\n]', terms)
+
+    parts = []
+    for term in terms:
+        term = str(term).strip()
+        if not term:
+            continue
+        truncated = term.endswith('*')
+        if truncated:
+            term = term[:-1].strip()
+        if not term:
+            continue
+        body = r'\s+'.join(re.escape(word) for word in term.split())
+        if truncated:
+            body += r'\w*'
+        # a boundary next to a full stop or bracket can never match, so each end
+        # is anchored only when the term itself ends in a word character
+        head = r'\b' if term[:1].isalnum() or term[:1] == '_' else ''
+        tail = r'\b' if truncated or term[-1:].isalnum() or term[-1:] == '_' else ''
+        parts.append(head + body + tail)
+
+    if not parts:
+        return ''
+    return '(?:' + '|'.join(parts) + ')'

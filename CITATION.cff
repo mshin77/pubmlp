@@ -7,8 +7,9 @@ authors:
     given-names: Mikyung
     email: shin.mikyung@gmail.com
     orcid: "https://orcid.org/0000-0001-7907-9193"
-version: "0.5.0"
-date-released: "2026-08-07"
+version: "0.6.0"
+date-released: "2026-08-12"
+abstract: "Fuses transformer embeddings with tabular features through a multilayer perceptron (MLP) for human-in-the-loop screening workflows."
 license: MIT
 url: "https://github.com/mshin77/pubmlp"
 repository-code: "https://github.com/mshin77/pubmlp"

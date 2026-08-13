@@ -35,8 +35,7 @@ env/
 Thumbs.db
 
 *.log
-
-.pytest_cache/
 tests/
+.pytest_cache/
 docs_src/
 docs/.doctrees/

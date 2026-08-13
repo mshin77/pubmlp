@@ -128,8 +128,7 @@ def train_evaluate_model(model, train_dataloader, validation_dataloader, test_da
         validation_accuracy = calculate_accuracy(model, validation_dataloader, device, forward_fn=forward_fn)
         validation_accuracies.append(validation_accuracy)
 
-        improved = validation_loss < best_val_loss
-        if improved:
+        if validation_loss < best_val_loss:
             best_val_loss = validation_loss
             best_model_state = {k: v.clone() for k, v in model.state_dict().items()}
             best_epoch = epoch + 1

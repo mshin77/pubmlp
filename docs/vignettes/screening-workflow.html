@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/documentation_options.js?v=7f41d439"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'vignettes/screening-workflow';</script>
@@ -438,12 +438,11 @@
                   
   <section id="screening-workflow">
 <h1>Screening Workflow<a class="headerlink" href="#screening-workflow" title="Link to this heading">#</a></h1>
-<p>End-to-end example of using pubmlp to screen bibliometric records for a systematic review. Two approaches are shown:</p>
+<p>Screening bibliometric records for a systematic review, two ways:</p>
 <ul class="simple">
-<li><p><strong>Approach A — Sequential single-label</strong>: Train one model per screening criterion. Best when criteria have very different class distributions or when each label needs separate tuning.</p></li>
-<li><p><strong>Approach B — Simultaneous multi-label</strong>: Train one model that predicts all criteria at once. Best when criteria share signal from the same text, reducing total training time.</p></li>
+<li><p><strong>Approach A — Sequential single-label</strong>: one model per criterion.</p></li>
+<li><p><strong>Approach B — Simultaneous multi-label</strong>: one model for all criteria.</p></li>
 </ul>
-<p>Both approaches use multiple categorical and numeric columns.</p>
 <section id="shared-setup">
 <h2>Shared Setup<a class="headerlink" href="#shared-setup" title="Link to this heading">#</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -499,7 +498,7 @@
 <hr class="docutils" />
 <section id="approach-a-sequential-single-label">
 <h2>Approach A — Sequential Single-Label<a class="headerlink" href="#approach-a-sequential-single-label" title="Link to this heading">#</a></h2>
-<p>Train a separate model for each screening criterion. This is the approach when each label needs independent tuning or has very different characteristics.</p>
+<p>A separate model per criterion, for labels that need independent tuning or differ in class distribution.</p>
 <section id="a1-single-case-classification">
 <h3>A1. Single-Case Classification<a class="headerlink" href="#a1-single-case-classification" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">col_spec_sc</span> <span class="o">=</span> <span class="p">{</span>
@@ -640,7 +639,7 @@
 <hr class="docutils" />
 <section id="approach-b-simultaneous-multi-label">
 <h2>Approach B — Simultaneous Multi-Label<a class="headerlink" href="#approach-b-simultaneous-multi-label" title="Link to this heading">#</a></h2>
-<p>Train one model that predicts all criteria at once. Shared encoder representations can improve performance when the labels are related.</p>
+<p>One model for all criteria. A shared encoder helps when the labels are related.</p>
 <section id="b1-preprocess-with-multi-label">
 <h3>B1. Preprocess with Multi-Label<a class="headerlink" href="#b1-preprocess-with-multi-label" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">col_spec_multi</span> <span class="o">=</span> <span class="p">{</span>
@@ -791,7 +790,7 @@
 <hr class="docutils" />
 <section id="active-learning">
 <h2>Active Learning<a class="headerlink" href="#active-learning" title="Link to this heading">#</a></h2>
-<p>Use active learning to iteratively label the most informative records, reducing total screening effort.</p>
+<p>Label the most informative records first, cutting total screening effort.</p>
 <section id="import">
 <h3>Import<a class="headerlink" href="#import" title="Link to this heading">#</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pubmlp</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>

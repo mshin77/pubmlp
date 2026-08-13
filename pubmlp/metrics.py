@@ -21,7 +21,8 @@ def _single_label_metrics(true_labels, predictions, probabilities,
     }
 
     print(f"Evaluation Metrics: {label_name}")
-    print(classification_report(true_labels, predictions, target_names=['Exclude', 'Include'], digits=3, zero_division=0))
+    print(classification_report(true_labels, predictions, labels=[0, 1],
+                                target_names=['Exclude', 'Include'], digits=3, zero_division=0))
     print("Key Metrics:")
     for metric, value in metrics.items():
         if value is not None:
@@ -133,14 +134,24 @@ def _wss_single(true_array, probability_array, target_recall):
     if n_relevant == 0:
         return {'wss': np.nan, 'screened_pct': np.nan, 'recall_achieved': np.nan}
 
-    ranked = np.argsort(-probability_array)
-    cumulative_relevant = np.cumsum(true_array[ranked])
+    ranked = np.argsort(-probability_array, kind='stable')
+    ranked_true = true_array[ranked].astype(float)
+
+    # tied scores carry no ranking information, so each tie group contributes its
+    # mean relevance: the expectation under random tie-breaking
+    ranked_probability = probability_array[ranked]
+    boundaries = np.flatnonzero(np.diff(ranked_probability)) + 1
+    for group in np.split(np.arange(n_total), boundaries):
+        if len(group) > 1:
+            ranked_true[group] = ranked_true[group].mean()
+
+    cumulative_relevant = np.cumsum(ranked_true)
     target_count = int(np.ceil(target_recall * n_relevant))
     screened_to_target = min(np.searchsorted(cumulative_relevant, target_count) + 1, len(cumulative_relevant))
     screened_pct = screened_to_target / n_total
     wss = (1 - screened_pct) - (1 - target_recall)
     return {
-        'wss': max(wss, 0.0),
+        'wss': wss,
         'screened_pct': screened_pct,
         'recall_achieved': cumulative_relevant[screened_to_target - 1] / n_relevant,
     }
@@ -170,6 +181,9 @@ def calculate_ndcg(true_labels, probabilities):
     from sklearn.metrics import ndcg_score
     true_array = np.asarray(true_labels, dtype=float)
     probability_array = np.asarray(probabilities, dtype=float)
+
+    if len(true_array) < 2:
+        return float('nan')
 
     if true_array.ndim == 1:
         return float(ndcg_score(true_array.reshape(1, -1), probability_array.reshape(1, -1)))

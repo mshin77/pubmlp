@@ -1,11 +1,11 @@
 """
-PubMLP: Multimodal publication classifier with LLM and deep learning.
+PubMLP: Screening, full-text review, and coding for systematic reviews.
 
 Fuses transformer embeddings with tabular features through a multilayer
 perceptron (MLP) for human-in-the-loop screening workflows.
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 __author__ = "Mikyung Shin"
 __license__ = "MIT"
 
@@ -83,6 +83,7 @@ from .active_learning import (
 from .stopping import (
     StoppingState,
     should_stop,
+    expected_relevant,
     update_stopping_state,
     generate_stopping_report,
     calculate_wss,
@@ -90,7 +91,18 @@ from .stopping import (
     estimate_recall,
     recall_target_test,
 )
+from .llm import llm_screen, build_prompt, parse_response
+from .fulltext import (read_pdf, detect_sections, detect_page_labels,
+                       extract_fulltext_evidence, format_anchor)
+from .evidence import (find_keyword_spans, search_document, highlight_markdown,
+                       format_evidence)
+from .confidence import (score_answer, interpret_confidence, needs_escalation,
+                         score_extractions, confidence_report)
+from .rag import chunk_text, build_index, retrieve, extract_with_rag
+from .provenance import (ProvenanceTracker, load_provenance,
+                         compare_provenances)
 from .screening import (
+    pattern_from_terms,
     regex_screen,
     extract_window_evidence,
     extract_sentence_evidence,
@@ -138,9 +150,17 @@ __all__ = [
     'AuditTrail', 'AuditEntry', 'interpret_kappa', 'summarize_human_decisions', 'generate_prisma_report',
     'ALState', 'select_query_batch', 'create_review_batch', 'compare_reviewers', 'merge_human_labels',
     'simulate_al', 'rank_by_hybrid_max_uncertainty', 'rank_by_hybrid_max_random', 'safe_stratified_split',
-    'StoppingState', 'should_stop', 'update_stopping_state', 'generate_stopping_report', 'calculate_wss',
+    'StoppingState', 'should_stop', 'expected_relevant',
+    'llm_screen', 'build_prompt', 'parse_response',
+    'find_keyword_spans', 'search_document', 'highlight_markdown', 'format_evidence',
+    'score_answer', 'interpret_confidence', 'needs_escalation',
+    'score_extractions', 'confidence_report',
+    'chunk_text', 'build_index', 'retrieve', 'extract_with_rag',
+    'ProvenanceTracker', 'load_provenance', 'compare_provenances',
+    'read_pdf', 'detect_sections', 'detect_page_labels',
+    'extract_fulltext_evidence', 'format_anchor', 'update_stopping_state', 'generate_stopping_report', 'calculate_wss',
     'transition_phase', 'estimate_recall', 'recall_target_test',
-    'regex_screen', 'extract_window_evidence', 'extract_sentence_evidence', 'extract_all_evidence',
+    'regex_screen', 'pattern_from_terms', 'extract_window_evidence', 'extract_sentence_evidence', 'extract_all_evidence',
     'format_evidence_display', 'calculate_semantic_scores',
     'create_stratified_sample', 'save_sample_excel', 'apply_conditional_formatting',
     'count_pattern_matches', 'highlight_pattern_matches',

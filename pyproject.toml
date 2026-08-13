@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pubmlp"
-version = "0.5.0"
+version = "0.6.0"
 description = "Multimodal publication classifier with LLM and deep learning"
 readme = "README.md"
 license = "MIT"
@@ -45,6 +45,7 @@ screening = [
     "iterative-stratification>=0.1.7",
 ]
 benchmark = ["synergy-dataset>=1.0"]
+fulltext = ["pdfplumber>=0.11"]
 test = [
     "pubmlp[screening]",
     "pytest>=7.0",
@@ -60,6 +61,9 @@ Issues = "https://github.com/mshin77/pubmlp/issues"
 where = ["."]
 include = ["pubmlp*"]
 
+[tool.setuptools.package-data]
+pubmlp = ["console/*.html", "console/*.js"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py39"
@@ -69,5 +73,6 @@ select = ["E", "F", "W", "I", "N", "UP", "B"]
 ignore = ["E501"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "pubmlp"]
 python_files = ["test_*.py"]
+addopts = "--doctest-modules"

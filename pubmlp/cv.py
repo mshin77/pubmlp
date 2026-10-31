@@ -1,0 +1,182 @@
+import copy
+import numpy as np
+import torch
+from sklearn.model_selection import StratifiedKFold, KFold
+from torch.utils.data import SequentialSampler, RandomSampler
+
+from .model import PubMLP
+from .preprocess import preprocess_dataset, create_dataloader
+from .train import train_evaluate_model
+from .predict import get_predictions_and_labels
+from .metrics import calculate_evaluation_metrics
+
+try:
+    from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
+    _has_iterstrat = True
+except ImportError:
+    _has_iterstrat = False
+
+
+def cross_validate(data, tokenizer, device, column_specifications, numeric_transform, config,
+                   categorical_cols_num=0, numeric_cols_num=0, output_dir=None,
+                   categorical_vocab_sizes=None, output_size=1, label_names=None):
+    """
+    Stratified K-fold cross-validation for PubMLP.
+
+    Args:
+        data: DataFrame with text, categorical, numeric, and label columns.
+        tokenizer: HuggingFace AutoTokenizer.
+        device: torch device.
+        column_specifications: dict with 'text_cols', 'categorical_cols', 'numeric_cols', 'label_col'.
+        numeric_transform: dict mapping numeric columns to transform type.
+        config: Config instance.
+        categorical_cols_num: Number of categorical feature columns (legacy scalar mode).
+        numeric_cols_num: Number of numeric feature columns.
+        output_dir: Optional path to save per-fold figures.
+        categorical_vocab_sizes: List of vocab sizes for embedding mode.
+        output_size: Number of output labels.
+        label_names: List of label name strings for multi-label display.
+
+    Returns:
+        dict with 'fold_metrics', 'mean_metrics', 'std_metrics', 'best_fold', 'best_model_state'.
+    """
+    config.set_random_seeds()
+    label_col = column_specifications['label_col']
+    is_multi = isinstance(label_col, list)
+
+    if is_multi and _has_iterstrat:
+        y_multi = data[label_col].values
+        skf = MultilabelStratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+        split_iter = skf.split(data, y_multi)
+    elif is_multi:
+        strat_labels = data[label_col].astype(str).agg('_'.join, axis=1).values
+        try:
+            skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+            list(skf.split(data, strat_labels))
+            skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+            split_iter = skf.split(data, strat_labels)
+        except ValueError:
+            skf = KFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+            split_iter = skf.split(data)
+    else:
+        strat_labels = data[label_col].values
+        skf = StratifiedKFold(n_splits=config.n_folds, shuffle=True, random_state=config.random_seed)
+        split_iter = skf.split(data, strat_labels)
+
+    fold_metrics = []
+    best_fold_val_loss = float('inf')
+    best_fold_index = 0
+    best_model_state = None
+
+    for fold_index, (train_indices, validation_indices) in enumerate(split_iter):
+        print(f'\n{"="*60}')
+        print(f'Fold {fold_index + 1}/{config.n_folds}')
+        print(f'{"="*60}')
+        print(f'Training: {len(train_indices)} | Validation: {len(validation_indices)}')
+
+        train_data = data.iloc[train_indices].reset_index(drop=True)
+        validation_data = data.iloc[validation_indices].reset_index(drop=True)
+
+        train_dataset, fitted = preprocess_dataset(
+            train_data, tokenizer, device, column_specifications,
+            numeric_transform, max_length=config.max_length,
+            rare_threshold=getattr(config, 'rare_threshold', 5),
+        )
+        validation_dataset, _ = preprocess_dataset(
+            validation_data, tokenizer, device, column_specifications,
+            numeric_transform, max_length=config.max_length,
+            fitted_transforms=fitted,
+        )
+
+        train_loader = create_dataloader(train_dataset, RandomSampler, config.batch_size)
+        validation_loader = create_dataloader(validation_dataset, SequentialSampler, config.eval_batch_size)
+
+        fold_vocab_sizes = fitted.categorical_vocab_sizes if fitted.categorical_vocabs else categorical_vocab_sizes
+
+        model = PubMLP(
+            categorical_cols_num=categorical_cols_num,
+            numeric_cols_num=numeric_cols_num,
+            mlp_hidden_size=config.mlp_hidden_size,
+            dropout_rate=config.dropout_rate,
+            embedding_model=config.embedding_model,
+            model_name=config.model_name,
+            n_hidden_layers=config.n_hidden_layers,
+            pooling_strategy=config.pooling_strategy,
+            categorical_vocab_sizes=fold_vocab_sizes,
+            output_size=output_size,
+        )
+        model.to(device)
+
+        optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
+
+        results = train_evaluate_model(
+            model, train_loader, validation_loader, None,
+            optimizer, torch.nn.BCEWithLogitsLoss(), device, config.epochs,
+            early_stopping_patience=config.early_stopping_patience,
+            gradient_clip_norm=config.gradient_clip_norm,
+            pos_weight=getattr(config, 'pos_weight', None),
+            warmup_steps=getattr(config, 'warmup_steps', 0),
+        )
+
+        train_losses, validation_losses, train_accuracies, validation_accuracies, test_accuracy, best_val_loss, fold_state, best_epoch = results
+
+        if fold_state is not None:
+            model.load_state_dict(fold_state)
+
+        predictions, probabilities, true_labels = get_predictions_and_labels(model, validation_loader, device)
+
+        fold_dir = f'{output_dir}/fold_{fold_index + 1}' if output_dir else None
+        metrics = calculate_evaluation_metrics(
+            true_labels, predictions, probabilities,
+            output_dir=fold_dir,
+            label_name=f'fold_{fold_index + 1}',
+            save_figures=output_dir is not None,
+            label_names=label_names,
+        )
+        best_epoch_accuracy = validation_accuracies[best_epoch - 1] if validation_accuracies and 0 < best_epoch <= len(validation_accuracies) else 0.0
+        metrics.update({
+            'best_epoch': best_epoch,
+            'best_val_loss': best_val_loss,
+            'validation_accuracy': best_epoch_accuracy,
+        })
+        fold_metrics.append(metrics)
+
+        if best_val_loss < best_fold_val_loss:
+            best_fold_val_loss = best_val_loss
+            best_fold_index = fold_index
+            best_model_state = copy.deepcopy(fold_state)
+
+        if 'f1_score' in metrics:
+            print(f'Fold {fold_index + 1} — F1: {metrics["f1_score"]:.3f} | '
+                  f'Precision: {metrics["precision"]:.3f} | Recall: {metrics["recall"]:.3f}')
+        else:
+            print(f'Fold {fold_index + 1} — Macro F1: {metrics["macro_f1"]:.3f} | '
+                  f'Hamming Loss: {metrics["hamming_loss"]:.3f}')
+
+    # Aggregate across folds
+    metric_keys = [k for k in fold_metrics[0] if isinstance(fold_metrics[0][k], (int, float, np.integer, np.floating)) and fold_metrics[0][k] is not None]
+    mean_metrics = {}
+    std_metrics = {}
+    for k in metric_keys:
+        vals = [fm[k] for fm in fold_metrics if fm.get(k) is not None]
+        if vals:
+            mean_metrics[k] = float(np.mean(vals))
+            std_metrics[k] = float(np.std(vals))
+
+    print(f'\n{"="*60}')
+    print(f'Cross-Validation Summary ({config.n_folds} folds)')
+    print(f'{"="*60}')
+    summary_keys = [k for k in ['accuracy', 'precision', 'recall', 'specificity', 'f1_score',
+                                 'roc_auc', 'macro_f1', 'hamming_loss'] if k in mean_metrics]
+    for k in summary_keys:
+        print(f'{k}: {mean_metrics[k]:.3f} \u00b1 {std_metrics[k]:.3f}')
+    best_acc = fold_metrics[best_fold_index].get('validation_accuracy', 0.0)
+    print(f'Best fold: {best_fold_index + 1} (validation accuracy: {best_acc:.3f}%)')
+
+    return {
+        'fold_metrics': fold_metrics,
+        'mean_metrics': mean_metrics,
+        'std_metrics': std_metrics,
+        'best_fold': best_fold_index,
+        'best_model_state': best_model_state,
+    }

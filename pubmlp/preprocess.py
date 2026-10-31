@@ -1,0 +1,372 @@
+from dataclasses import dataclass, field
+import logging
+import pandas as pd
+import numpy as np
+from torch.utils.data import Dataset, Sampler, DataLoader
+import torch
+from sklearn.preprocessing import QuantileTransformer, RobustScaler
+
+logger = logging.getLogger(__name__)
+
+
+def split_data(data, random_state=42, test_pct=0.10, validation_pct=0.10,
+               min_test=20, min_validation=20, id_col=None,
+               test_keys=None, validation_keys=None):
+    """
+    Split data into training, validation, and test sets.
+
+    Basic usage returns 3 DataFrames (backward compatible):
+        train_df, validation_df, test_df = split_data(df)
+
+    With id_col, returns 5 values for persistent splits across active learning iterations:
+        train_df, validation_df, test_df, test_keys, validation_keys = split_data(df, id_col='an')
+
+    Args:
+        data: DataFrame to split.
+        random_state: Random seed for shuffling.
+        test_pct: Fraction for test set (default 0.10).
+        validation_pct: Fraction for validation set (default 0.10).
+        min_test: Minimum test set size.
+        min_validation: Minimum validation set size.
+        id_col: Column name for persistent key-based splits. When provided, returns 5 values.
+        test_keys: Previously saved test keys to restore split.
+        validation_keys: Previously saved validation keys to restore split.
+
+    Returns:
+        Without id_col: (training_df, validation_df, test_df)
+        With id_col: (training_df, validation_df, test_df, test_keys, validation_keys)
+    """
+    if id_col and test_keys and validation_keys:
+        held_out = set(test_keys) | set(validation_keys)
+        test_df = data[data[id_col].isin(test_keys)].copy()
+        validation_df = data[data[id_col].isin(validation_keys)].copy()
+        training_df = data[~data[id_col].isin(held_out)].copy()
+        return training_df, validation_df, test_df, test_keys, validation_keys
+
+    shuffled = data.sample(frac=1, random_state=random_state)
+    n_test = max(int(test_pct * len(shuffled)), min_test)
+    n_validation = max(int(validation_pct * len(shuffled)), min_validation)
+
+    test_df = shuffled.iloc[:n_test]
+    validation_df = shuffled.iloc[n_test:n_test + n_validation]
+    training_df = shuffled.iloc[n_test + n_validation:]
+
+    if id_col:
+        out_test_keys = test_df[id_col].tolist()
+        out_validation_keys = validation_df[id_col].tolist()
+        return training_df.copy(), validation_df.copy(), test_df.copy(), out_test_keys, out_validation_keys
+
+    return training_df.copy(), validation_df.copy(), test_df.copy()
+
+
+def _serialize_qt(qt):
+    return {
+        'n_quantiles': qt.n_quantiles,
+        'output_distribution': qt.output_distribution,
+        'references_': qt.references_.tolist(),
+        'quantiles_': qt.quantiles_.tolist(),
+    }
+
+
+def _deserialize_qt(qt_params):
+    qt = QuantileTransformer(
+        n_quantiles=qt_params['n_quantiles'],
+        output_distribution=qt_params['output_distribution'],
+        random_state=0,
+    )
+    qt.references_ = np.array(qt_params['references_'])
+    qt.quantiles_ = np.array(qt_params['quantiles_'])
+    qt.n_features_in_ = 1
+    return qt
+
+
+_numeric_serialize_spec = {
+    'min': (lambda p: {'min_val': float(p['min_val'])},
+            lambda e: {'min_val': e['min_val']}),
+    'max': (lambda p: {'max_val': float(p['max_val'])},
+            lambda e: {'max_val': e['max_val']}),
+    'mean': (lambda p: {'mean_val': float(p['mean_val'])},
+             lambda e: {'mean_val': e['mean_val']}),
+    'quantile': (lambda p: {'qt_params': _serialize_qt(p['qt'])},
+                 lambda e: {'qt': _deserialize_qt(e['qt_params'])}),
+    'log1p': (lambda p: {'qt_params': _serialize_qt(p['qt'])},
+              lambda e: {'qt': _deserialize_qt(e['qt_params'])}),
+    'robust': (lambda p: {'center': float(p['scaler'].center_[0]),
+                          'scale': float(p['scaler'].scale_[0])},
+               lambda e: {'scaler': _restore_robust(e['center'], e['scale'])}),
+}
+
+
+def _restore_robust(center, scale):
+    scaler = RobustScaler()
+    scaler.center_ = np.array([center])
+    scaler.scale_ = np.array([scale])
+    scaler.n_features_in_ = 1
+    return scaler
+
+
+def _serialize_numeric(params):
+    entry = {'transform': params['transform']}
+    if 'median' in params:
+        entry['median'] = float(params['median'])
+    entry.update(_numeric_serialize_spec[params['transform']][0](params))
+    return entry
+
+
+def _deserialize_numeric(entry):
+    params = {'transform': entry['transform']}
+    if 'median' in entry:
+        params['median'] = entry['median']
+    params.update(_numeric_serialize_spec[entry['transform']][1](entry))
+    return params
+
+
+@dataclass
+class FittedTransforms:
+    """Stores fitted parameters from training data for reuse on validation/test."""
+    categorical_vocabs: dict = field(default_factory=dict)
+    numeric_params: dict = field(default_factory=dict)
+
+    @property
+    def categorical_vocab_sizes(self):
+        return [len(vocab) for vocab in self.categorical_vocabs.values()]
+
+    def to_dict(self):
+        return {
+            'categorical_vocabs': self.categorical_vocabs,
+            'numeric_params': {col: _serialize_numeric(p) for col, p in self.numeric_params.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls()
+        obj.categorical_vocabs = d.get('categorical_vocabs', {})
+        obj.numeric_params = {col: _deserialize_numeric(e) for col, e in d.get('numeric_params', {}).items()}
+        return obj
+
+
+class CustomDataset(Dataset):
+    """Dataset holding tokenized text, categorical/numeric features, and labels."""
+
+    def __init__(self, input_ids, attention_mask, labels, categorical_tensor=None,
+                 numeric_tensor=None, texts=None):
+        self.input_ids = input_ids
+        self.attention_mask = attention_mask
+        self.labels = labels
+        self.categorical_tensor = categorical_tensor if categorical_tensor is not None else torch.tensor([], dtype=torch.long)
+        self.numeric_tensor = numeric_tensor if numeric_tensor is not None else torch.tensor([], dtype=torch.float)
+        self.texts = texts
+
+    def __getitem__(self, index):
+        item = {
+            'input_ids': self.input_ids[index],
+            'attention_mask': self.attention_mask[index],
+            'labels': self.labels[index],
+            'categorical_tensor': self.categorical_tensor[index] if self.categorical_tensor.numel() > 0 else self.categorical_tensor,
+            'numeric_tensor': self.numeric_tensor[index] if self.numeric_tensor.numel() > 0 else self.numeric_tensor,
+        }
+        if self.texts is not None:
+            item['texts'] = self.texts[index]
+        return item
+
+    def __len__(self):
+        return len(self.input_ids)
+
+
+class CachedEmbeddingDataset(Dataset):
+    """Dataset of precomputed sentence embeddings + tabular features (cached-embedding fast path)."""
+
+    def __init__(self, sentence_embedding, labels, categorical_tensor=None, numeric_tensor=None):
+        self.sentence_embedding = sentence_embedding
+        self.labels = labels
+        self.categorical_tensor = categorical_tensor if categorical_tensor is not None else torch.tensor([], dtype=torch.long)
+        self.numeric_tensor = numeric_tensor if numeric_tensor is not None else torch.tensor([], dtype=torch.float)
+
+    def __getitem__(self, index):
+        return {
+            'sentence_embedding': self.sentence_embedding[index],
+            'labels': self.labels[index],
+            'categorical_tensor': self.categorical_tensor[index] if self.categorical_tensor.numel() > 0 else self.categorical_tensor,
+            'numeric_tensor': self.numeric_tensor[index] if self.numeric_tensor.numel() > 0 else self.numeric_tensor,
+        }
+
+    def __len__(self):
+        return len(self.sentence_embedding)
+
+
+def _build_categorical_vocab(series, rare_threshold=5):
+    """Build value->index mapping. Index 0=<UNK>, 1=<RARE>, 2+=actual values."""
+    counts = series.value_counts()
+    vocab = {'<UNK>': 0, '<RARE>': 1}
+    next_index = 2
+    for val, count in counts.items():
+        if count >= rare_threshold:
+            vocab[val] = next_index
+            next_index += 1
+    return vocab
+
+
+def _encode_categorical(series, vocab):
+    """Map series values to integer indices using vocab."""
+    rare_index = vocab['<RARE>']
+    unknown_index = vocab['<UNK>']
+    return series.map(lambda v: vocab.get(v, rare_index) if pd.notna(v) else unknown_index)
+
+
+def _fit_numeric(series, transform):
+    """Fit numeric transform on training data, return params dict."""
+    clean = series.dropna()
+    if len(clean) == 0:
+        logger.warning(f"No non-null values for numeric transform '{transform}'; using NaN defaults")
+    params = {'transform': transform, 'median': float(clean.median()) if len(clean) > 0 else np.nan}
+    if transform == 'min':
+        params['min_val'] = float(clean.min()) if len(clean) > 0 else np.nan
+    elif transform == 'max':
+        params['max_val'] = float(clean.max()) if len(clean) > 0 else np.nan
+    elif transform == 'mean':
+        params['mean_val'] = float(clean.mean()) if len(clean) > 0 else np.nan
+    elif transform in ('quantile', 'log1p'):
+        values = clean.values.reshape(-1, 1)
+        if transform == 'log1p':
+            values = np.log1p(values)
+        qt = QuantileTransformer(n_quantiles=min(1000, len(values)),
+                                 output_distribution='normal', random_state=0)
+        qt.fit(values)
+        params['qt'] = qt
+    elif transform == 'robust':
+        scaler = RobustScaler()
+        scaler.fit(clean.values.reshape(-1, 1))
+        params['scaler'] = scaler
+    else:
+        raise ValueError(f"Invalid transform: {transform}")
+    return params
+
+
+def _apply_qt(filled, index, params, log=False):
+    values = filled.values.reshape(-1, 1)
+    if log:
+        values = np.log1p(values)
+    return pd.Series(params['qt'].transform(values).flatten(), index=index)
+
+
+_numeric_apply = {
+    'min': lambda filled, idx, p: filled - p['min_val'],
+    'max': lambda filled, idx, p: filled / p['max_val'] if p['max_val'] != 0 else filled,
+    'mean': lambda filled, idx, p: filled - p['mean_val'],
+    'quantile': lambda filled, idx, p: _apply_qt(filled, idx, p),
+    'log1p': lambda filled, idx, p: _apply_qt(filled, idx, p, log=True),
+    'robust': lambda filled, idx, p: pd.Series(
+        p['scaler'].transform(filled.values.reshape(-1, 1)).flatten(), index=idx),
+}
+
+
+def _apply_numeric(series, params):
+    """Apply fitted numeric transform to a series."""
+    filled = series.fillna(params['median'])
+    transform = params['transform']
+    if transform not in _numeric_apply:
+        raise ValueError(f"Unknown transform: {transform}")
+    return _numeric_apply[transform](filled, series.index, params)
+
+
+def preprocess_dataset(data, tokenizer, device, column_specifications, numeric_transform,
+                       max_length=512, fitted_transforms=None, rare_threshold=5):
+    """
+    Preprocess DataFrame into a CustomDataset.
+
+    Args:
+        data: DataFrame with text, categorical, numeric, and label columns.
+        tokenizer: HuggingFace tokenizer.
+        device: torch device.
+        column_specifications: dict with 'text_cols', 'categorical_cols', 'numeric_cols', 'label_col'.
+            label_col can be a string (single label) or list of strings (multi-label).
+        numeric_transform: dict mapping numeric column names to transform type.
+        max_length: Max token length for tokenization.
+        fitted_transforms: FittedTransforms from training data. None = fit from this data (training).
+        rare_threshold: Minimum count for a categorical value to get its own embedding index.
+
+    Returns:
+        tuple: (CustomDataset, FittedTransforms) when fitting (fitted_transforms=None)
+        tuple: (CustomDataset, None) when applying existing transforms
+    """
+    fitting = fitted_transforms is None
+    if fitting:
+        fitted_transforms = FittedTransforms()
+
+    sep = tokenizer.sep_token or " "
+    texts = [
+        f" {sep} ".join(str(row[col]) for col in column_specifications["text_cols"])
+        for _, row in data.iterrows()
+    ]
+
+    encoding = tokenizer(texts, max_length=max_length, truncation=True, padding="max_length", return_tensors="pt")
+    input_ids = encoding["input_ids"].to(device)
+    attention_mask = encoding["attention_mask"].to(device)
+
+    # Categorical encoding — integer indices for nn.Embedding
+    categorical_cols = column_specifications.get("categorical_cols", [])
+    if categorical_cols:
+        cat_indices = []
+        for cat_col in categorical_cols:
+            if fitting:
+                vocab = _build_categorical_vocab(data[cat_col], rare_threshold)
+                fitted_transforms.categorical_vocabs[cat_col] = vocab
+            else:
+                vocab = fitted_transforms.categorical_vocabs[cat_col]
+            cat_indices.append(_encode_categorical(data[cat_col], vocab).values)
+        categorical_tensor = torch.tensor(np.column_stack(cat_indices), dtype=torch.long).to(device)
+    else:
+        categorical_tensor = torch.tensor([], dtype=torch.long).to(device)
+
+    # Numeric normalization — fit on training, apply stored params on validation/test
+    numeric_cols = column_specifications.get("numeric_cols", [])
+    if numeric_cols:
+        numeric_values = []
+        for num_col in numeric_cols:
+            if num_col not in numeric_transform:
+                raise ValueError(f"Column {num_col} not found in numeric_transform.")
+            if fitting:
+                params = _fit_numeric(data[num_col], numeric_transform[num_col])
+                fitted_transforms.numeric_params[num_col] = params
+            else:
+                params = fitted_transforms.numeric_params[num_col]
+            numeric_values.append(_apply_numeric(data[num_col], params).values)
+        numeric_arr = np.column_stack(numeric_values).astype(np.float32)
+        numeric_tensor = torch.tensor(numeric_arr, dtype=torch.float).to(device)
+    else:
+        numeric_tensor = torch.tensor([], dtype=torch.float).to(device)
+
+    # Labels — single (string) or multi-label (list)
+    label_col = column_specifications["label_col"]
+    if isinstance(label_col, list):
+        label_values = data[label_col].values.astype(np.float32)
+        labels = torch.tensor(label_values, dtype=torch.float).to(device)
+    else:
+        label_values = data[label_col].values.astype(np.float32)
+        labels = torch.tensor(label_values, dtype=torch.float).unsqueeze(1).to(device)
+
+    dataset = CustomDataset(input_ids, attention_mask, labels, categorical_tensor, numeric_tensor, texts)
+    return (dataset, fitted_transforms) if fitting else (dataset, None)
+
+
+def collate_fn(batch):
+    """Custom collate handling both tokenized and cached-embedding batches."""
+    result = {
+        'labels': torch.stack([item['labels'] for item in batch]),
+        'categorical_tensor': torch.stack([item['categorical_tensor'] for item in batch]),
+        'numeric_tensor': torch.stack([item['numeric_tensor'] for item in batch]),
+    }
+    if 'sentence_embedding' in batch[0]:
+        result['sentence_embedding'] = torch.stack([item['sentence_embedding'] for item in batch])
+    else:
+        result['input_ids'] = torch.stack([item['input_ids'] for item in batch])
+        result['attention_mask'] = torch.stack([item['attention_mask'] for item in batch])
+        result['texts'] = None
+        if 'texts' in batch[0] and batch[0]['texts'] is not None:
+            result['texts'] = [item['texts'] for item in batch]
+    return result
+
+
+def create_dataloader(dataset: Dataset, sampler: Sampler, batch_size: int) -> DataLoader:
+    """Create DataLoader with custom collate function."""
+    return DataLoader(dataset, sampler=sampler(dataset), batch_size=batch_size, collate_fn=collate_fn)
